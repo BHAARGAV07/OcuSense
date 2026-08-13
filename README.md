@@ -79,7 +79,7 @@ Every risk/trigger output is framed as a **potential association** or **relative
 |:---|:---|
 | 📱 Mobile frontend | Flutter (3.44.x, Dart 3.12.x) |
 | ⚙️ Backend | Python · FastAPI · Pydantic · SQLAlchemy |
-| 🗄️ Database | PostgreSQL |
+| 🗄️ Database | Supabase |
 | 🧠 Intelligence layer | Rule-based trigger engine · weighted risk scoring · statistical association (no ML in the prototype) |
 | 🌍 Environmental data | [Open-Meteo](https://open-meteo.com/) — weather, humidity, dust, AQI (free, no key) + [Google Pollen API](https://developers.google.com/maps/documentation/pollen) — pollen (free tier, billing enabled) |
 | 📍 Location | Device-native GPS via Flutter's `geolocator` package (no API key, no billing) |
