@@ -33,11 +33,16 @@ app = FastAPI(
 )
 
 # CORS setup
-origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+# NOTE: Only treat CORS_ORIGINS as a wildcard when it is exactly "*".
+# A value like "http://localhost:*" contains "*" as a port glob but must NOT
+# be expanded to a bare wildcard — "*" + allow_credentials=True is rejected
+# by every compliant browser.
+is_wildcard = settings.CORS_ORIGINS.strip() == "*"
+origins = ["*"] if is_wildcard else [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins if "*" not in settings.CORS_ORIGINS else ["*"],
-    allow_credentials=True,
+    allow_origins=origins,
+    allow_credentials=not is_wildcard,  # credentials are incompatible with wildcard origin
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -6,11 +6,18 @@ import os
 import logging
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
-import joblib
-import numpy as np
+try:
+    import joblib
+except ImportError:
+    joblib = None
+
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 from app.ml.data.schema import PredictionFeatures
-from app.ml.models.explainer import ModelExplainer
+# ModelExplainer is lazily imported inside MLPredictionEngine.predict
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -90,6 +97,7 @@ class MLPredictionEngine(PredictionEngine):
             risk_level = "HIGH"
 
         # 5. Explainability: Top Contributing Factors
+        from app.ml.models.explainer import ModelExplainer
         top_factors = ModelExplainer.explain_prediction(
             feature_names=feature_names,
             scaled_features=scaled_X,
@@ -270,4 +278,8 @@ def get_prediction_engine(engine_type: Optional[str] = None) -> PredictionEngine
     selected = engine_type or settings.PREDICTION_ENGINE
     if selected.lower() == "rule" or selected.lower() == "rule_based":
         return RuleBasedPredictionEngine()
-    return MLPredictionEngine()
+    try:
+        return MLPredictionEngine()
+    except Exception as e:
+        logger.warning(f"ML engine initialization failed ({e}), falling back to RuleBasedPredictionEngine.")
+        return RuleBasedPredictionEngine()

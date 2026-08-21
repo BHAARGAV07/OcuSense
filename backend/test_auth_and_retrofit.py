@@ -5,11 +5,16 @@ from app.main import app
 client = TestClient(app)
 
 
+import uuid
+
 def test_step_3_register():
     print("\n--- Testing Step 3: POST /api/auth/register ---")
+    uid = uuid.uuid4().hex[:8]
+    email_a = f"usera_{uid}@example.com"
+    email_b = f"userb_{uid}@example.com"
     
     # 1. Register User A
-    payload_a = {"email": "usera@example.com", "password": "securepassword123"}
+    payload_a = {"email": email_a, "password": "securepassword123"}
     resp = client.post("/api/auth/register", json=payload_a)
     assert resp.status_code == 201, f"Expected 201, got {resp.status_code}: {resp.text}"
     data_a = resp.json()
@@ -23,23 +28,23 @@ def test_step_3_register():
     print("Duplicate Email Conflict Response:", resp_dup.json())
 
     # 3. Register User B
-    payload_b = {"email": "userb@example.com", "password": "password456"}
+    payload_b = {"email": email_b, "password": "password456"}
     resp_b = client.post("/api/auth/register", json=payload_b)
     assert resp_b.status_code == 201
     print("[SUCCESS] Registration & Duplicate Conflict Checks Passed!")
-    return data_a["user_id"], resp_b.json()["user_id"]
+    return data_a["user_id"], resp_b.json()["user_id"], email_a, email_b
 
 
-def test_step_3_login():
+def test_step_3_login(email_a: str, email_b: str):
     print("\n--- Testing Step 3: POST /api/auth/login & /refresh ---")
     
     # 1. Login with bad password (Expect 401)
-    bad_login = client.post("/api/auth/login", json={"email": "usera@example.com", "password": "wrongpassword"})
+    bad_login = client.post("/api/auth/login", json={"email": email_a, "password": "wrongpassword"})
     assert bad_login.status_code == 401, f"Expected 401, got {bad_login.status_code}"
     print("Invalid Login Response:", bad_login.json())
 
     # 2. Successful Login User A
-    login_a = client.post("/api/auth/login", json={"email": "usera@example.com", "password": "securepassword123"})
+    login_a = client.post("/api/auth/login", json={"email": email_a, "password": "securepassword123"})
     assert login_a.status_code == 200, f"Expected 200, got {login_a.status_code}"
     tokens_a = login_a.json()
     print("User A Login Tokens:", json.dumps(tokens_a, indent=2))
@@ -48,7 +53,7 @@ def test_step_3_login():
     assert tokens_a["token_type"] == "bearer"
 
     # 3. Successful Login User B
-    login_b = client.post("/api/auth/login", json={"email": "userb@example.com", "password": "password456"})
+    login_b = client.post("/api/auth/login", json={"email": email_b, "password": "password456"})
     assert login_b.status_code == 200
     tokens_b = login_b.json()
 
@@ -123,8 +128,8 @@ def test_step_5_retrofit_analysis_protection(token_a, user_b_id):
 
 
 if __name__ == "__main__":
-    user_a_id, user_b_id = test_step_3_register()
-    token_a, token_b = test_step_3_login()
+    user_a_id, user_b_id, email_a, email_b = test_step_3_register()
+    token_a, token_b = test_step_3_login(email_a, email_b)
     test_step_4_patient_profiles(token_a)
     test_step_5_retrofit_analysis_protection(token_a, user_b_id)
     print("\n[ALL 5 STEPS VERIFIED END-TO-END SUCCESSFULLY!]")

@@ -16,7 +16,19 @@ class AuthProvider extends ChangeNotifier {
   String? _errorMessage;
 
   AuthProvider(this._authService, this._apiClient, {PersonalizationService? personalizationService})
-      : _personalizationService = personalizationService ?? PersonalizationService(_apiClient);
+      : _personalizationService = personalizationService ?? PersonalizationService(_apiClient) {
+    _setupAuthHandlers();
+  }
+
+  void _setupAuthHandlers() {
+    _apiClient.setAuthHandlers(
+      onRefreshToken: () => _authService.refreshToken(),
+      onUnauthenticated: () {
+        _status = AuthStatus.unauthenticated;
+        notifyListeners();
+      },
+    );
+  }
 
   AuthStatus get status => _status;
   bool get isAuthenticated => _status == AuthStatus.authenticated;

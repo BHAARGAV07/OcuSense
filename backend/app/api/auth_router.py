@@ -79,7 +79,11 @@ def refresh_access_token(body: RefreshTokenRequest, db: Session = Depends(get_db
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
         
         new_access_token = create_access_token(user_id=str(user.id))
-        return TokenResponse(access_token=new_access_token, token_type="bearer")
+        return TokenResponse(
+            access_token=new_access_token,
+            refresh_token=body.refresh_token,
+            token_type="bearer"
+        )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 

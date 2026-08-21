@@ -58,11 +58,36 @@ class AuthService {
     }
   }
 
+  Future<String?> refreshToken() async {
+    final refresh = await getRefreshToken();
+    if (refresh == null || refresh.isEmpty) {
+      return null;
+    }
+    try {
+      final response = await _apiClient.post(
+        '/api/auth/refresh',
+        body: {'refresh_token': refresh},
+        isAuthEndpoint: true,
+      );
+      if (response is Map<String, dynamic> && response.containsKey('access_token')) {
+        final newAccess = response['access_token'] as String;
+        final newRefresh = response['refresh_token'] as String?;
+        await saveTokens(accessToken: newAccess, refreshToken: newRefresh ?? refresh);
+        return newAccess;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<Map<String, dynamic>> login(String email, String password) async {
-    final response = await _apiClient.post('/api/auth/login', body: {
-      'email': email,
-      'password': password,
-    });
+    final response = await _apiClient.post(
+      '/api/auth/login',
+      body: {
+        'email': email,
+        'password': password,
+      },
+      isAuthEndpoint: true,
+    );
     
     if (response is Map<String, dynamic> && response.containsKey('access_token')) {
       final token = response['access_token'];
@@ -73,16 +98,20 @@ class AuthService {
   }
 
   Future<Map<String, dynamic>> register(String email, String password) async {
-    final response = await _apiClient.post('/api/auth/register', body: {
-      'email': email,
-      'password': password,
-    });
+    final response = await _apiClient.post(
+      '/api/auth/register',
+      body: {
+        'email': email,
+        'password': password,
+      },
+      isAuthEndpoint: true,
+    );
     return response;
   }
 
   Future<void> logout() async {
     try {
-      await _apiClient.post('/api/auth/logout');
+      await _apiClient.post('/api/auth/logout', isAuthEndpoint: true);
     } catch (_) {}
     await clearTokens();
   }

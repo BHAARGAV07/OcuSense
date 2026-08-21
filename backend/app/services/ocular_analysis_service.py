@@ -6,7 +6,10 @@ import os
 import tempfile
 import logging
 from typing import Dict, Any, List, Optional
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 logger = logging.getLogger(__name__)
 
