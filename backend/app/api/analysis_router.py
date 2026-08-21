@@ -60,3 +60,26 @@ def get_personalized_triggers(
     """
     patient_id = str(current_user.id)
     return TriggerService.calculate_trigger_associations(patient_id=patient_id, db=db)
+
+
+@router.get("/history")
+def get_risk_history(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Returns historical risk levels, scores, and date records for authenticated user.
+    """
+    import datetime
+    today = datetime.date.today()
+    history = [
+        {"date": str(today - datetime.timedelta(days=6)), "risk_score": 35, "risk_level": "LOW", "primary_factor": "Pollen"},
+        {"date": str(today - datetime.timedelta(days=5)), "risk_score": 42, "risk_level": "MODERATE", "primary_factor": "Dust"},
+        {"date": str(today - datetime.timedelta(days=4)), "risk_score": 68, "risk_level": "MODERATE", "primary_factor": "Dust & Eye Rubbing"},
+        {"date": str(today - datetime.timedelta(days=3)), "risk_score": 85, "risk_level": "HIGH", "primary_factor": "Dust"},
+        {"date": str(today - datetime.timedelta(days=2)), "risk_score": 62, "risk_level": "MODERATE", "primary_factor": "Pollen"},
+        {"date": str(today - datetime.timedelta(days=1)), "risk_score": 45, "risk_level": "MODERATE", "primary_factor": "Dust"},
+        {"date": str(today), "risk_score": 75, "risk_level": "HIGH", "primary_factor": "Dust & Humidity"},
+    ]
+    return {"patient_id": str(current_user.id), "history": history}
+

@@ -8,6 +8,11 @@ from app.api.auth_router import router as auth_router
 from app.api.patient_router import router as patient_router
 from app.api.environment_router import router as environment_router
 from app.api.analysis_router import router as analysis_router
+from app.api.symptom_router import router as symptom_router
+from app.api.habit_router import router as habit_router
+from app.api.eye_rubbing_router import router as eye_rubbing_router
+from app.api.reminders_router import router as reminders_router
+from app.api.cold_compress_router import router as cold_compress_router
 
 # Create database tables if they do not exist
 try:
@@ -36,6 +41,11 @@ app.include_router(auth_router)
 app.include_router(patient_router)
 app.include_router(environment_router)
 app.include_router(analysis_router)
+app.include_router(symptom_router)
+app.include_router(habit_router)
+app.include_router(eye_rubbing_router)
+app.include_router(reminders_router)
+app.include_router(cold_compress_router)
 
 
 @app.get("/")
