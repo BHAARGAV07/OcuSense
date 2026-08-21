@@ -22,6 +22,19 @@ class Settings(BaseSettings):
     POLLEN_CACHE_TTL_HOURS: int = 24
     WEATHER_CACHE_TTL_HOURS: int = 1
 
+    # Machine Learning & Prediction Architecture Settings
+    PREDICTION_ENGINE: str = "ml"  # "ml" or "rule"
+    MODEL_VERSION: str = "ocular-risk-v0.1-prototype"
+    RISK_LOW_THRESHOLD: float = 0.20
+    RISK_HIGH_THRESHOLD: float = 0.60
+    PREDICTION_WINDOW: str = "24–72 hours"
+    MODEL_ARTIFACT_PATH: str = "app/ml/models/artifacts/ocular_risk_v0.1_prototype.joblib"
+
+    # Literature-Informed Reference Guidelines (Annotations only, not diagnostic cut-offs)
+    LITERATURE_PM25_REF: float = 45.0
+    LITERATURE_PM10_REF: float = 70.0
+    LITERATURE_HUMIDITY_REF: float = 60.0
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

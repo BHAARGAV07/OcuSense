@@ -103,7 +103,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.accent.withOpacity(0.08) : Colors.white,
+                          color: isSelected ? AppColors.accent.withValues(alpha: 0.08) : Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isSelected ? AppColors.accent : AppColors.border,

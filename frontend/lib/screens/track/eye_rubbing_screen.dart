@@ -85,7 +85,7 @@ class _EyeRubbingScreenState extends State<EyeRubbingScreen> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.riskModerate.withOpacity(0.4),
+                        color: AppColors.riskModerate.withValues(alpha: 0.4),
                         blurRadius: 30,
                         offset: const Offset(0, 12),
                       )

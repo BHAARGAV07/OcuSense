@@ -97,7 +97,7 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
                   padding: const EdgeInsets.all(14),
                   margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
-                    color: AppColors.riskHigh.withOpacity(0.1),
+                    color: AppColors.riskHigh.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Text(
@@ -131,7 +131,7 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color: _getSeverityColor(_severityScore).withOpacity(0.15),
+                      color: _getSeverityColor(_severityScore).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
@@ -149,7 +149,7 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
                 data: SliderTheme.of(context).copyWith(
                   activeTrackColor: _getSeverityColor(_severityScore),
                   thumbColor: _getSeverityColor(_severityScore),
-                  overlayColor: _getSeverityColor(_severityScore).withOpacity(0.2),
+                  overlayColor: _getSeverityColor(_severityScore).withValues(alpha: 0.2),
                 ),
                 child: Slider(
                   value: _severityScore,
@@ -195,7 +195,7 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
                     ),
                     Switch(
                       value: _symptomsIncreased,
-                      activeColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                       onChanged: (val) {
                         setState(() {
                           _symptomsIncreased = val;

@@ -1,23 +1,38 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/api_client.dart';
+import '../services/personalization_service.dart';
 
 enum AuthStatus { uninitialized, authenticated, unauthenticated }
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService;
   final ApiClient _apiClient;
+  final PersonalizationService _personalizationService;
 
   AuthStatus _status = AuthStatus.uninitialized;
   bool _isLoading = false;
+  bool _isOnboarded = true;
   String? _errorMessage;
 
-  AuthProvider(this._authService, this._apiClient);
+  AuthProvider(this._authService, this._apiClient, {PersonalizationService? personalizationService})
+      : _personalizationService = personalizationService ?? PersonalizationService(_apiClient);
 
   AuthStatus get status => _status;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
+  bool get isOnboarded => _isOnboarded;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+
+  Future<void> checkOnboardingStatus() async {
+    try {
+      final profile = await _personalizationService.getProfile();
+      _isOnboarded = profile.isOnboarded;
+      notifyListeners();
+    } catch (_) {
+      _isOnboarded = true; // Fallback to avoid blocking
+    }
+  }
 
   Future<void> initializeAuth() async {
     _isLoading = true;
@@ -28,6 +43,7 @@ class AuthProvider extends ChangeNotifier {
       if (token != null && token.isNotEmpty) {
         _apiClient.setAuthToken(token);
         _status = AuthStatus.authenticated;
+        await checkOnboardingStatus();
       } else {
         _status = AuthStatus.unauthenticated;
       }
@@ -47,6 +63,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _authService.login(email, password);
       _status = AuthStatus.authenticated;
+      await checkOnboardingStatus();
       _isLoading = false;
       notifyListeners();
       return true;

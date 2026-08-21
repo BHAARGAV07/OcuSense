@@ -13,17 +13,23 @@ from app.api.habit_router import router as habit_router
 from app.api.eye_rubbing_router import router as eye_rubbing_router
 from app.api.reminders_router import router as reminders_router
 from app.api.cold_compress_router import router as cold_compress_router
+from app.api.prediction_router import router as prediction_router
+from app.api.ocular_router import router as ocular_router
+from app.api.personalization_router import router as personalization_router
 
-# Create database tables if they do not exist
+from app.database import engine, Base, ensure_db_schema
+import app.models  # Ensure all SQLAlchemy models are registered
+
+# Create database tables and migrate missing columns if they do not exist
 try:
-    Base.metadata.create_all(bind=engine)
+    ensure_db_schema()
 except Exception:
     pass
 
 app = FastAPI(
     title="OcuSense API",
     version="1.0.0",
-    description="FastAPI backend for OcuSense — Authentication, Patient Profiles, Hardware Integration & Analysis Engine",
+    description="FastAPI backend for OcuSense — AI-Assisted Personalized Ocular Allergy Flare-Risk Prediction",
 )
 
 # CORS setup
@@ -38,6 +44,9 @@ app.add_middleware(
 
 # Include Routers
 app.include_router(auth_router)
+app.include_router(personalization_router)
+app.include_router(prediction_router)
+app.include_router(ocular_router)
 app.include_router(patient_router)
 app.include_router(environment_router)
 app.include_router(analysis_router)

@@ -126,6 +126,44 @@ class ApiClient {
     }
   }
 
+  Future<dynamic> uploadMultipart(
+    String endpoint, {
+    required String fileField,
+    required List<int> fileBytes,
+    required String filename,
+    String? mediaType,
+  }) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+    final request = http.MultipartRequest('POST', uri);
+
+    if (_authToken != null && _authToken!.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $_authToken';
+    }
+
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        fileField,
+        fileBytes,
+        filename: filename,
+      ),
+    );
+
+    if (kDebugMode) {
+      print('🌐 [MULTIPART POST] $uri | File: $filename (${fileBytes.length} bytes)');
+    }
+
+    try {
+      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamedResponse);
+      return _processResponse(response);
+    } on SocketException {
+      throw ApiException(0, 'Network connection failure. Please check your network.');
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(0, 'Multipart upload failed: $e');
+    }
+  }
+
   dynamic _processResponse(http.Response response) {
     if (kDebugMode) {
       print('📥 Status [${response.statusCode}] | Response: ${response.body}');

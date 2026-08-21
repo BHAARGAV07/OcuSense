@@ -157,7 +157,7 @@ class _RiskHistoryScreenState extends State<RiskHistoryScreen> {
                     dotData: const FlDotData(show: true),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: AppColors.primary.withOpacity(0.12),
+                      color: AppColors.primary.withValues(alpha: 0.12),
                     ),
                   ),
                 ],
@@ -206,9 +206,9 @@ class _RiskHistoryScreenState extends State<RiskHistoryScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.12),
+                        color: color.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: color.withOpacity(0.3)),
+                        border: Border.all(color: color.withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         '${item.riskLevel} (${item.riskScore})',

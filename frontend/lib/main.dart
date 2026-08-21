@@ -11,6 +11,10 @@ import 'services/analysis_service.dart';
 import 'services/reminder_service.dart';
 import 'services/cold_compress_service.dart';
 
+import 'services/personalization_service.dart';
+import 'services/prediction_service.dart';
+import 'services/ocular_service.dart';
+
 import 'providers/auth_provider.dart';
 import 'providers/patient_provider.dart';
 import 'providers/analysis_provider.dart';
@@ -19,6 +23,7 @@ import 'providers/care_provider.dart';
 
 import 'screens/auth/welcome_screen.dart';
 import 'screens/home/main_tab_navigation.dart';
+import 'screens/personalization/personalization_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,18 +36,29 @@ void main() {
   final analysisService = AnalysisService(apiClient);
   final reminderService = ReminderService(apiClient);
   final coldCompressService = ColdCompressService(apiClient);
+  final personalizationService = PersonalizationService(apiClient);
+  final predictionService = PredictionService(apiClient);
+  final ocularService = OcularService(apiClient);
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => AuthProvider(authService, apiClient)..initializeAuth(),
+          create: (_) => AuthProvider(
+            authService,
+            apiClient,
+            personalizationService: personalizationService,
+          )..initializeAuth(),
         ),
         ChangeNotifierProvider(
           create: (_) => PatientProvider(patientService),
         ),
         ChangeNotifierProvider(
-          create: (_) => AnalysisProvider(analysisService),
+          create: (_) => AnalysisProvider(
+            analysisService,
+            predictionService: predictionService,
+            ocularService: ocularService,
+          ),
         ),
         ChangeNotifierProvider(
           create: (_) => SymptomProvider(symptomService, habitService),
@@ -75,6 +91,9 @@ class OcuSenseApp extends StatelessWidget {
             );
           }
           if (auth.isAuthenticated) {
+            if (!auth.isOnboarded) {
+              return const PersonalizationScreen();
+            }
             return const MainTabNavigation();
           }
           return const WelcomeScreen();

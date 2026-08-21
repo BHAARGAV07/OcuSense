@@ -5,6 +5,7 @@ import '../../providers/patient_provider.dart';
 import '../../theme/app_colors.dart';
 import '../auth/welcome_screen.dart';
 import 'edit_profile_screen.dart';
+import '../personalization/personalization_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -23,11 +24,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _logout(BuildContext context) async {
+    final nav = Navigator.of(context);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     await authProvider.logout();
 
     if (mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
+      nav.pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const WelcomeScreen()),
         (route) => false,
       );
@@ -123,22 +125,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 28),
 
-              // Action Buttons: Edit Profile & Logout
+              // Action Buttons: Edit Profile, Personalization & Logout
               ElevatedButton.icon(
                 onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PersonalizationScreen(isEditing: true)),
+                  );
+                },
+                icon: const Icon(Icons.tune_rounded),
+                label: const Text('Personalization & Allergy History'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  minimumSize: const Size(double.infinity, 54),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final provider = Provider.of<PatientProvider>(context, listen: false);
                   await Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const EditProfileScreen()),
                   );
                   if (mounted) {
-                    Provider.of<PatientProvider>(context, listen: false).fetchProfile();
+                    provider.fetchProfile();
                   }
                 },
                 icon: const Icon(Icons.edit_outlined),
-                label: const Text('Edit Profile'),
+                label: const Text('Edit Basic Profile'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   minimumSize: const Size(double.infinity, 54),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
               ),
               const SizedBox(height: 14),

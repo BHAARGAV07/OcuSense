@@ -8,6 +8,7 @@ import '../track/symptoms_screen.dart';
 import '../track/habits_screen.dart';
 import '../track/eye_rubbing_screen.dart';
 import '../insights/triggers_screen.dart';
+import '../check_eyes/eye_check_flow_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -88,9 +89,74 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Main Risk Card Component
                 RiskCard(
                   riskAnalysis: analysisProvider.riskAnalysis,
+                  mlPrediction: analysisProvider.latestPrediction,
                   isLoading: analysisProvider.isLoadingRisk,
                   errorMessage: analysisProvider.riskErrorMessage,
                   onRetry: () => analysisProvider.fetchRiskAnalysis(),
+                  onCheckEyes: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const EyeCheckFlowScreen()));
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // CHECK MY EYES PROMINENT HERO CTA
+                InkWell(
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const EyeCheckFlowScreen()));
+                  },
+                  borderRadius: BorderRadius.circular(22),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.primary, AppColors.accent],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: AppColors.shadowColor,
+                          blurRadius: 16,
+                          offset: Offset(0, 6),
+                        )
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.videocam_rounded, color: Colors.white, size: 28),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'Check My Eyes',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 17,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                '10–20s video capture • Objective CV redness • Flare probability',
+                                style: TextStyle(color: Colors.white70, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 20),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 28),
 
@@ -169,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Colors.white.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.analytics_outlined, color: Colors.white, size: 28),
@@ -243,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: color, size: 24),
@@ -273,19 +339,19 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.riskModerate.withOpacity(0.15), Colors.white],
+            colors: [AppColors.riskModerate.withValues(alpha: 0.15), Colors.white],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.riskModerate.withOpacity(0.3)),
+          border: Border.all(color: AppColors.riskModerate.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.riskModerate.withOpacity(0.2),
+                color: AppColors.riskModerate.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: const Text('👁️', style: TextStyle(fontSize: 22)),
@@ -323,9 +389,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final envHw = data?['environment_hardware'] as Map<String, dynamic>?;
 
     final dust = envHw?['dust'] ?? 421;
-    final temp = envHw?['temperature'] ?? envApi?['temperature'] ?? 31;
     final humidity = envHw?['humidity'] ?? envApi?['humidity'] ?? 76;
-    final weather = envApi?['weather'] ?? 'Partly Cloudy';
 
     return Container(
       padding: const EdgeInsets.all(20),

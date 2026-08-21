@@ -15,7 +15,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
   final _titleController = TextEditingController();
   String _selectedType = 'EYE_DROPS';
   String _selectedTime = '08:00 AM';
-  String _selectedFreq = 'Daily';
+  final String _selectedFreq = 'Daily';
 
   @override
   void initState() {
@@ -65,7 +65,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _selectedType,
+                      initialValue: _selectedType,
                       decoration: const InputDecoration(labelText: 'Type'),
                       items: const [
                         DropdownMenuItem(value: 'EYE_DROPS', child: Text('Eye Drops')),
@@ -80,7 +80,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _selectedTime,
+                      initialValue: _selectedTime,
                       decoration: const InputDecoration(labelText: 'Schedule Time'),
                       items: const [
                         DropdownMenuItem(value: '08:00 AM', child: Text('08:00 AM')),
@@ -100,6 +100,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 onPressed: () async {
                   if (_titleController.text.trim().isEmpty) return;
                   final careProvider = Provider.of<CareProvider>(context, listen: false);
+                  final nav = Navigator.of(context);
                   await careProvider.addReminder(
                     title: _titleController.text.trim(),
                     type: _selectedType,
@@ -107,7 +108,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                     frequency: _selectedFreq,
                   );
                   _titleController.clear();
-                  if (mounted) Navigator.pop(context);
+                  if (mounted) nav.pop();
                 },
                 child: const Text('Save Reminder'),
               ),
@@ -183,7 +184,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: (isDrops ? AppColors.primary : AppColors.accent).withOpacity(0.12),
+                  color: (isDrops ? AppColors.primary : AppColors.accent).withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -210,7 +211,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
               ),
               Switch(
                 value: item.isEnabled,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
                 onChanged: (val) {
                   provider.toggleReminder(item.id, val);
                 },

@@ -56,7 +56,7 @@ class SymptomSelector extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary.withOpacity(0.08) : Colors.white,
+              color: isSelected ? AppColors.primary.withValues(alpha: 0.08) : Colors.white,
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color: isSelected ? AppColors.primary : AppColors.border,
