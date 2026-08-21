@@ -84,19 +84,22 @@ class OcuSensePreprocessor:
             # Map [0.0, 1.0] to [0.0, 3.0] scale
             redness_val = float(np.clip(ocular.redness_score * 3.0, 0.0, 3.0))
 
+        def optional_float(value: Optional[float]) -> float:
+            return float(value) if value is not None else np.nan
+
         row_dict = {
             "Itching": float(symptoms.itching),
             "Redness": redness_val,
             "Watering": float(symptoms.watering),
             "Irritation": float(symptoms.irritation),
             "Severity": float(symptoms.severity if symptoms.severity > 0 else (symptoms.itching + symptoms.watering + symptoms.redness + symptoms.irritation)),
-            "PM2.5": float(env.pm25),
-            "PM10": float(env.pm10),
-            "AQI": float(env.aqi),
-            "Temperature": float(env.temperature),
-            "Humidity": float(env.humidity),
+            "PM2.5": optional_float(env.pm25),
+            "PM10": optional_float(env.pm10),
+            "AQI": optional_float(env.aqi),
+            "Temperature": optional_float(env.temperature),
+            "Humidity": optional_float(env.humidity),
             "Outdoor_Exposure": float(exposure.outdoor_exposure),
             "Indoor_Dust": float(exposure.indoor_dust),
-            "Pollen": str(env.pollen)
+            "Pollen": env.pollen if env.pollen is not None else "Unknown"
         }
         return pd.DataFrame([row_dict])

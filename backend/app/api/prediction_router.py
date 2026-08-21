@@ -25,6 +25,28 @@ from app.services.aggregation_service import DataAggregationService
 router = APIRouter(prefix="/api/prediction", tags=["Prediction"])
 
 
+def _environment_snapshot_from_features(features: PredictionFeatures) -> dict:
+    return {
+        "pm25": features.environment.pm25,
+        "pm10": features.environment.pm10,
+        "aqi": features.environment.aqi,
+        "temperature": features.environment.temperature,
+        "humidity": features.environment.humidity,
+        "uv": features.environment.uv,
+        "pollen": features.environment.pollen,
+        "weather": features.environment.weather,
+        "missing_fields": features.metadata.get("environment_missing_fields", []),
+        "source": features.metadata.get("environment_source", "request_features"),
+    }
+
+
+def _optional_float(value, default=None):
+    try:
+        return float(value) if value is not None else default
+    except (TypeError, ValueError):
+        return default
+
+
 @router.post("", response_model=PredictionResponse)
 def generate_prediction(
     body: PredictionRequest,
@@ -35,6 +57,10 @@ def generate_prediction(
     Executes flare-risk prediction using the specified or default PredictionEngine (ML).
     Saves the prediction record and reproducible feature snapshot.
     """
+    environmental_snapshot = body.environmental_snapshot or _environment_snapshot_from_features(body.features)
+    if environmental_snapshot.get("missing_fields"):
+        body.features.metadata["environment_missing_fields"] = environmental_snapshot["missing_fields"]
+
     engine = get_prediction_engine(body.engine)
     result = engine.predict(body.features)
     
@@ -52,6 +78,7 @@ def generate_prediction(
             model_version=result["model_version"],
             prediction_mode=result["prediction_mode"],
             feature_snapshot=body.features.model_dump(),
+            environmental_snapshot=environmental_snapshot,
             top_contributing_features=result.get("top_contributing_features", []),
             preventive_guidance=result.get("preventive_guidance", []),
             created_at=datetime.datetime.now(datetime.timezone.utc)
@@ -62,6 +89,7 @@ def generate_prediction(
         db.rollback()
 
     result["prediction_id"] = prediction_id
+    result["environmental_snapshot"] = environmental_snapshot
     return result
 
 
@@ -84,12 +112,15 @@ async def compare_prediction_engines(
     patient = combined.get("patient", {})
     
     features = PredictionFeatures()
-    features.environment.pm25 = float(env_api.get("dust_numeric", 35.0) * 0.45)
-    features.environment.pm10 = float(env_api.get("dust_numeric", 60.0))
-    features.environment.aqi = float(env_api.get("aqi_numeric", 75.0))
-    features.environment.temperature = float(env_hw.get("temperature", env_api.get("temperature", 29.0)))
-    features.environment.humidity = float(env_hw.get("humidity", env_api.get("humidity", 65.0)))
-    features.environment.pollen = str(env_api.get("pollen", "Moderate")).capitalize()
+    features.environment.pm25 = _optional_float(env_api.get("pm25"))
+    features.environment.pm10 = _optional_float(env_api.get("pm10") or env_api.get("dust_numeric"))
+    features.environment.aqi = _optional_float(env_api.get("aqi_numeric"))
+    features.environment.temperature = _optional_float(env_hw.get("temperature"), _optional_float(env_api.get("temperature")))
+    features.environment.humidity = _optional_float(env_hw.get("humidity"), _optional_float(env_api.get("humidity")))
+    features.environment.pollen = str(env_api.get("pollen")).capitalize() if env_api.get("pollen") else None
+    features.environment.weather = env_api.get("weather")
+    features.metadata["environment_missing_fields"] = env_api.get("missing_fields", [])
+    features.metadata["environment_source"] = env_api.get("sources", {})
     
     symptoms_list = patient.get("symptoms", [])
     features.symptoms.itching = 2 if "itching" in symptoms_list else 0
@@ -142,6 +173,7 @@ def get_prediction_history(
             "risk_level": r.risk_level,
             "model_version": r.model_version,
             "prediction_mode": r.prediction_mode,
+            "environment_missing_fields": (r.environmental_snapshot or {}).get("missing_fields", []),
             "top_factors": [f.get("display_name", "") for f in (r.top_contributing_features or [])[:2]],
             "has_outcome": len(r.outcomes) > 0 if hasattr(r, "outcomes") and r.outcomes else False
         })

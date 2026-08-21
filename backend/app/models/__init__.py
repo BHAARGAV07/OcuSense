@@ -82,6 +82,7 @@ class PredictionRecord(Base):
     model_version = Column(String, nullable=False)
     prediction_mode = Column(String, default="prototype_multivariable_ml")
     feature_snapshot = Column(JSON, nullable=False)  # Canonical PredictionFeatures snapshot
+    environmental_snapshot = Column(JSON, nullable=True)
     top_contributing_features = Column(JSON, nullable=True)
     preventive_guidance = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)

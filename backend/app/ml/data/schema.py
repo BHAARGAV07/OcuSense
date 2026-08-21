@@ -50,14 +50,14 @@ class SymptomFeatures(BaseModel):
 
 
 class EnvironmentalFeatures(BaseModel):
-    pm25: float = Field(25.0, description="PM2.5 concentration in ug/m3")
-    pm10: float = Field(45.0, description="PM10 concentration in ug/m3")
-    aqi: float = Field(70.0, description="Air Quality Index")
-    temperature: float = Field(28.0, description="Ambient temperature in Celsius")
-    humidity: float = Field(65.0, description="Relative humidity in percentage")
-    uv: Optional[float] = Field(5.0, description="UV index")
-    pollen: str = Field("Moderate", description="Low, Moderate, High")
-    weather: Optional[str] = Field("Sunny", description="General weather description")
+    pm25: Optional[float] = Field(None, description="PM2.5 concentration in ug/m3, if available")
+    pm10: Optional[float] = Field(None, description="PM10 concentration in ug/m3, if available")
+    aqi: Optional[float] = Field(None, description="Air Quality Index, if available")
+    temperature: Optional[float] = Field(None, description="Ambient temperature in Celsius, if available")
+    humidity: Optional[float] = Field(None, description="Relative humidity in percentage, if available")
+    uv: Optional[float] = Field(None, description="UV index, if available")
+    pollen: Optional[str] = Field(None, description="Low, Moderate, High, if available")
+    weather: Optional[str] = Field(None, description="General weather description, if available")
 
 
 class ExposureFeatures(BaseModel):

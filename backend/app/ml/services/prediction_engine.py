@@ -107,25 +107,19 @@ class MLPredictionEngine(PredictionEngine):
         )
 
         # 6. Literature-Informed Reference Comparison (For Contextual Annotations)
-        literature_refs = {
-            "pm25": {
-                "current": features.environment.pm25,
-                "reference": settings.LITERATURE_PM25_REF,
-                "unit": "µg/m³",
-                "elevated": features.environment.pm25 > settings.LITERATURE_PM25_REF
-            },
-            "pm10": {
-                "current": features.environment.pm10,
-                "reference": settings.LITERATURE_PM10_REF,
-                "unit": "µg/m³",
-                "elevated": features.environment.pm10 > settings.LITERATURE_PM10_REF
-            },
-            "humidity": {
-                "current": features.environment.humidity,
-                "reference": settings.LITERATURE_HUMIDITY_REF,
-                "unit": "%",
-                "elevated": features.environment.humidity > settings.LITERATURE_HUMIDITY_REF
+        def reference_payload(current: Optional[float], reference: float, unit: str) -> Dict[str, Any]:
+            return {
+                "current": current,
+                "reference": reference,
+                "unit": unit,
+                "elevated": bool(current is not None and current > reference),
+                "available": current is not None,
             }
+
+        literature_refs = {
+            "pm25": reference_payload(features.environment.pm25, settings.LITERATURE_PM25_REF, "µg/m³"),
+            "pm10": reference_payload(features.environment.pm10, settings.LITERATURE_PM10_REF, "µg/m³"),
+            "humidity": reference_payload(features.environment.humidity, settings.LITERATURE_HUMIDITY_REF, "%"),
         }
 
         # 7. Low-Risk Preventive Guidance
@@ -187,7 +181,7 @@ class RuleBasedPredictionEngine(PredictionEngine):
         contributing_factors = []
 
         # Rule 1: High PM10/Dust + High Pollen + High Symptoms
-        is_high_dust = env.pm10 > 70 or features.exposure.indoor_dust >= 3.0
+        is_high_dust = (env.pm10 is not None and env.pm10 > 70) or features.exposure.indoor_dust >= 3.0
         is_high_pollen = str(env.pollen).lower() == "high"
         is_high_symptoms = symptoms.severity >= 6 or symptoms.itching >= 2
 
@@ -202,7 +196,7 @@ class RuleBasedPredictionEngine(PredictionEngine):
             })
 
         # Rule 2: High Humidity
-        if env.humidity >= 75:
+        if env.humidity is not None and env.humidity >= 75:
             impact = 15
             raw_score += impact
             contributing_factors.append({
@@ -224,7 +218,7 @@ class RuleBasedPredictionEngine(PredictionEngine):
             })
 
         # Rule 4: High AQI
-        if env.aqi > 100:
+        if env.aqi is not None and env.aqi > 100:
             impact = 15
             raw_score += impact
             contributing_factors.append({

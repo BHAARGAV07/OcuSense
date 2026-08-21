@@ -10,6 +10,7 @@ from app.ml.data.schema import PredictionFeatures
 class PredictionRequest(BaseModel):
     features: PredictionFeatures
     engine: Optional[str] = Field(None, description="'ml' (default) or 'rule'")
+    environmental_snapshot: Optional[Dict[str, Any]] = Field(None, description="Raw environmental service payload used for this prediction")
 
 
 class ContributingFactorOut(BaseModel):
@@ -33,6 +34,7 @@ class PredictionResponse(BaseModel):
     prediction_mode: str
     top_contributing_features: List[ContributingFactorOut]
     literature_references: Optional[Dict[str, Any]] = None
+    environmental_snapshot: Optional[Dict[str, Any]] = None
     preventive_guidance: List[str]
     disclaimer: str
 

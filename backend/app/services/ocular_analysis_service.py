@@ -2,6 +2,8 @@
 Ocular Computer Vision and Image Quality Assessment Service.
 Processes eye video/images, validates capture quality, and extracts objective redness metrics.
 """
+from __future__ import annotations
+
 import os
 import tempfile
 import logging
@@ -21,6 +23,18 @@ MIN_CONTRAST_STD = 20.0
 
 
 class OcularAnalysisService:
+    @staticmethod
+    def _dependency_error() -> Optional[Dict[str, Any]]:
+        if np is None:
+            return {
+                "success": False,
+                "is_acceptable": False,
+                "error": "Ocular analysis dependency unavailable: numpy is not installed in this Python environment.",
+                "image_quality": 0.0,
+                "feedback": "Install backend requirements or run the backend from the project virtual environment."
+            }
+        return None
+
     @staticmethod
     def _assess_frame_quality(cv2, frame_bgr: np.ndarray) -> Dict[str, Any]:
         """
@@ -98,7 +112,20 @@ class OcularAnalysisService:
         Safely processes video bytes: samples 5 evenly spaced frames,
         validates image quality, extracts objective features, and cleans up.
         """
-        import cv2
+        dependency_error = cls._dependency_error()
+        if dependency_error:
+            return dependency_error
+
+        try:
+            import cv2
+        except ImportError:
+            return {
+                "success": False,
+                "is_acceptable": False,
+                "error": "Ocular analysis dependency unavailable: opencv-python-headless is not installed in this Python environment.",
+                "image_quality": 0.0,
+                "feedback": "Install backend requirements or run the backend from the project virtual environment."
+            }
 
         tmp_path = None
         try:
@@ -202,7 +229,20 @@ class OcularAnalysisService:
         """
         Processes a single still eye photograph.
         """
-        import cv2
+        dependency_error = cls._dependency_error()
+        if dependency_error:
+            return dependency_error
+
+        try:
+            import cv2
+        except ImportError:
+            return {
+                "success": False,
+                "is_acceptable": False,
+                "error": "Ocular analysis dependency unavailable: opencv-python-headless is not installed in this Python environment.",
+                "image_quality": 0.0,
+                "feedback": "Install backend requirements or run the backend from the project virtual environment."
+            }
 
         try:
             nparr = np.frombuffer(image_bytes, np.uint8)
