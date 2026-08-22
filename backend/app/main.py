@@ -33,15 +33,28 @@ app = FastAPI(
 )
 
 # CORS setup
-# NOTE: Only treat CORS_ORIGINS as a wildcard when it is exactly "*".
-# A value like "http://localhost:*" contains "*" as a port glob but must NOT
-# be expanded to a bare wildcard — "*" + allow_credentials=True is rejected
-# by every compliant browser.
-is_wildcard = settings.CORS_ORIGINS.strip() == "*"
-origins = ["*"] if is_wildcard else [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+# `allow_origins` performs exact matching, so `http://localhost:*` does not
+# match the random port Flutter web uses in development. Translate that one
+# documented development pattern into Starlette's origin regular expression
+# support; retain exact matching for every configured production origin.
+configured_origins = [
+    origin.strip()
+    for origin in settings.CORS_ORIGINS.split(",")
+    if origin.strip()
+]
+is_wildcard = configured_origins == ["*"]
+local_origin_pattern = "http://localhost:*"
+allow_origin_regex = None
+
+if local_origin_pattern in configured_origins:
+    allow_origin_regex = r"^http://localhost(?::\d+)?$"
+    configured_origins.remove(local_origin_pattern)
+
+origins = ["*"] if is_wildcard else configured_origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=allow_origin_regex,
     allow_credentials=not is_wildcard,  # credentials are incompatible with wildcard origin
     allow_methods=["*"],
     allow_headers=["*"],

@@ -95,16 +95,20 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
 
     final analysisProvider = Provider.of<AnalysisProvider>(context, listen: false);
 
-    // Fetch fresh environment
+    // Fetch fresh environmental readings. Values are passed through exactly as
+    // returned by the live API; unavailable values stay null rather than being
+    // replaced by demo constants.
+    await analysisProvider.fetchCombinedData();
     final envData = analysisProvider.combinedData?['environment_api'] as Map<String, dynamic>?;
-    final hwData = analysisProvider.combinedData?['environment_hardware'] as Map<String, dynamic>?;
 
-    final pm10 = (hwData?['dust'] ?? envData?['dust_numeric'] ?? 65.0).toDouble();
-    final pm25 = pm10 * 0.45;
-    final aqi = (envData?['aqi_numeric'] ?? 85.0).toDouble();
-    final humidity = (hwData?['humidity'] ?? envData?['humidity'] ?? 72.0).toDouble();
-    final temp = (hwData?['temperature'] ?? envData?['temperature'] ?? 30.0).toDouble();
-    final pollen = envData?['pollen'] ?? 'High';
+    double? asDouble(dynamic value) => value is num ? value.toDouble() : null;
+
+    final pm25 = asDouble(envData?['pm25']);
+    final pm10 = asDouble(envData?['pm10']) ?? asDouble(envData?['dust_numeric']);
+    final aqi = asDouble(envData?['aqi_numeric']) ?? asDouble(envData?['aqi']);
+    final humidity = asDouble(envData?['humidity']);
+    final temp = asDouble(envData?['temperature']);
+    final pollen = envData?['pollen'];
 
     final canonicalPayload = {
       'ocular': {
@@ -129,9 +133,13 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
         'aqi': aqi,
         'temperature': temp,
         'humidity': humidity,
-        'uv': 5.5,
+        'uv': asDouble(envData?['uv']),
         'pollen': pollen,
-        'weather': envData?['weather'] ?? 'Partly Cloudy',
+        'weather': envData?['weather'],
+      },
+      'metadata': {
+        'environment_missing_fields': envData?['missing_fields'] ?? [],
+        'environment_source': envData?['sources'] ?? {},
       },
       'exposure': {
         'outdoor_exposure': 3.0,

@@ -19,14 +19,15 @@ class DataAggregationService:
         Pull together patient inputs, external environmental data,
         and mocked hardware reading into one normalized object.
         """
-        # 1. Fetch Patient Input from DB (or fallback test data)
+        # 1. Fetch patient input from the database. Do not substitute demo
+        # values: a risk estimate must reflect only recorded user data.
         patient_data = {
             "patient_id": patient_id,
-            "symptoms": ["itching", "redness", "watering"],
-            "symptom_severity": "HIGH",
-            "symptom_severity_score": 8,
-            "habits": ["eye_rubbing"],
-            "recent_symptoms_increased": True
+            "symptoms": [],
+            "symptom_severity": "LOW",
+            "symptom_severity_score": 0,
+            "habits": [],
+            "recent_symptoms_increased": False,
         }
 
         if db:
@@ -43,7 +44,9 @@ class DataAggregationService:
                 if latest_habit:
                     patient_data["habits"] = latest_habit.habits or patient_data["habits"]
             except Exception:
-                pass  # Use fallback test data if DB query fails
+                # Return the empty state above rather than creating fake
+                # symptoms or exposure data when a query cannot be completed.
+                pass
 
         # 2. Fetch External Environmental API Data
         env_api_data = await EnvironmentalDataService.get_environmental_data(lat=lat, lon=lon)

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User
+from app.models import PredictionRecord, User
 from app.core.deps import get_current_user
 from app.services.aggregation_service import DataAggregationService
 from app.services.risk_engine import RiskEngine
@@ -70,16 +70,27 @@ def get_risk_history(
     """
     Returns historical risk levels, scores, and date records for authenticated user.
     """
-    import datetime
-    today = datetime.date.today()
-    history = [
-        {"date": str(today - datetime.timedelta(days=6)), "risk_score": 35, "risk_level": "LOW", "primary_factor": "Pollen"},
-        {"date": str(today - datetime.timedelta(days=5)), "risk_score": 42, "risk_level": "MODERATE", "primary_factor": "Dust"},
-        {"date": str(today - datetime.timedelta(days=4)), "risk_score": 68, "risk_level": "MODERATE", "primary_factor": "Dust & Eye Rubbing"},
-        {"date": str(today - datetime.timedelta(days=3)), "risk_score": 85, "risk_level": "HIGH", "primary_factor": "Dust"},
-        {"date": str(today - datetime.timedelta(days=2)), "risk_score": 62, "risk_level": "MODERATE", "primary_factor": "Pollen"},
-        {"date": str(today - datetime.timedelta(days=1)), "risk_score": 45, "risk_level": "MODERATE", "primary_factor": "Dust"},
-        {"date": str(today), "risk_score": 75, "risk_level": "HIGH", "primary_factor": "Dust & Humidity"},
-    ]
+    records = (
+        db.query(PredictionRecord)
+        .filter(PredictionRecord.user_id == str(current_user.id))
+        .order_by(PredictionRecord.created_at.desc())
+        .limit(30)
+        .all()
+    )
+
+    history = []
+    for record in reversed(records):
+        factors = record.top_contributing_features or []
+        primary_factor = "No dominant factor available"
+        if factors and isinstance(factors[0], dict):
+            primary_factor = factors[0].get("display_name", primary_factor)
+
+        history.append({
+            "date": str(record.created_at.date()),
+            "risk_score": record.risk_score_percentage,
+            "risk_level": record.risk_level,
+            "primary_factor": primary_factor,
+        })
+
     return {"patient_id": str(current_user.id), "history": history}
 

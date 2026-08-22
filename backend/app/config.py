@@ -13,6 +13,8 @@ class Settings(BaseSettings):
 
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
+    # Comma-separated exact origins, or a single local-development origin
+    # pattern such as `http://localhost:*`.
     CORS_ORIGINS: str = "http://localhost:*"
 
     # Intelligence & Risk Thresholds
