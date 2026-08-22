@@ -12,11 +12,15 @@ class AuthProvider extends ChangeNotifier {
 
   AuthStatus _status = AuthStatus.uninitialized;
   bool _isLoading = false;
-  bool _isOnboarded = true;
+  bool _isOnboarded = false;
   String? _errorMessage;
 
-  AuthProvider(this._authService, this._apiClient, {PersonalizationService? personalizationService})
-      : _personalizationService = personalizationService ?? PersonalizationService(_apiClient) {
+  AuthProvider(
+    this._authService,
+    this._apiClient, {
+    PersonalizationService? personalizationService,
+  }) : _personalizationService =
+           personalizationService ?? PersonalizationService(_apiClient) {
     _setupAuthHandlers();
   }
 
@@ -42,8 +46,26 @@ class AuthProvider extends ChangeNotifier {
       _isOnboarded = profile.isOnboarded;
       notifyListeners();
     } catch (_) {
-      _isOnboarded = true; // Fallback to avoid blocking
+      // Do not bypass onboarding when the profile cannot be loaded.
+      _isOnboarded = false;
     }
+  }
+
+  /// Called by PersonalizationScreen after Save or Skip.
+  ///
+  /// Only updates LOCAL state so the root Consumer<AuthProvider> in
+  /// main.dart reactively swaps to MainTabNavigation — no manual Navigator
+  /// call needed in the screen itself.
+  ///
+  /// - After Save: backend is_onboarded was already set true by
+  ///   saveOnboarding(), so this just syncs local state to match.
+  /// - After Skip: backend is_onboarded stays false (saveOnboarding() is
+  ///   never called), so next login's checkOnboardingStatus() correctly
+  ///   routes the user back to PersonalizationScreen. "Ask again next
+  ///   launch" behavior, with no extra backend logic needed.
+  void completeOnboarding() {
+    _isOnboarded = true;
+    notifyListeners();
   }
 
   Future<void> initializeAuth() async {
@@ -51,6 +73,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      _isOnboarded = false;
       final token = await _authService.getAccessToken();
       if (token != null && token.isNotEmpty) {
         _apiClient.setAuthToken(token);
@@ -73,6 +96,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      _isOnboarded = false;
       await _authService.login(email, password);
       _status = AuthStatus.authenticated;
       await checkOnboardingStatus();

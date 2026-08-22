@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../theme/app_colors.dart';
-import '../../services/api_client.dart';
 import '../../services/personalization_service.dart';
 import '../../models/personalization.dart';
-import '../home/main_tab_navigation.dart';
+import '../../providers/auth_provider.dart';
 
 class PersonalizationScreen extends StatefulWidget {
   final bool isEditing;
@@ -15,10 +15,11 @@ class PersonalizationScreen extends StatefulWidget {
 
 class _PersonalizationScreenState extends State<PersonalizationScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _personalizationService = PersonalizationService(ApiClient());
+  late final PersonalizationService _personalizationService;
 
   bool _isLoading = false;
   bool _isFetching = true;
+  bool _isSkipping = false;
 
   // Basic Profile
   final _nameController = TextEditingController();
@@ -49,6 +50,9 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
   @override
   void initState() {
     super.initState();
+    // Reuse the app-wide shared service (already wired with the authenticated
+    // ApiClient in main.dart) instead of constructing a fresh, tokenless one.
+    _personalizationService = context.read<PersonalizationService>();
     _loadExistingProfile();
   }
 
@@ -97,9 +101,15 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
       final profile = PersonalizationProfile(
         id: '',
         userId: '',
-        displayName: _nameController.text.trim().isNotEmpty ? _nameController.text.trim() : null,
-        locationName: _cityController.text.trim().isNotEmpty ? _cityController.text.trim() : null,
-        occupation: _occupationController.text.trim().isNotEmpty ? _occupationController.text.trim() : null,
+        displayName: _nameController.text.trim().isNotEmpty
+            ? _nameController.text.trim()
+            : null,
+        locationName: _cityController.text.trim().isNotEmpty
+            ? _cityController.text.trim()
+            : null,
+        occupation: _occupationController.text.trim().isNotEmpty
+            ? _occupationController.text.trim()
+            : null,
         age: _age,
         sex: _sex,
         previousAllergyHistory: _previousAllergyHistory,
@@ -112,7 +122,9 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
         outdoorActivityHours: _outdoorHours,
         eyeRubbingTendency: _eyeRubbingTendency,
         contactLensUse: _contactLensUse,
-        currentMedication: _medicationController.text.trim().isNotEmpty ? _medicationController.text.trim() : null,
+        currentMedication: _medicationController.text.trim().isNotEmpty
+            ? _medicationController.text.trim()
+            : null,
         isOnboarded: true,
       );
 
@@ -121,24 +133,39 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
       if (mounted) {
         if (widget.isEditing) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Personalization profile updated successfully.')),
+            const SnackBar(
+              content: Text('Personalization profile updated successfully.'),
+            ),
           );
           Navigator.pop(context);
         } else {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const MainTabNavigation()),
-            (route) => false,
-          );
+          // Backend is_onboarded is already true (set by saveOnboarding above).
+          // This just syncs local state so the root Consumer<AuthProvider> in
+          // main.dart reactively swaps to MainTabNavigation. No manual
+          // Navigator call needed.
+          context.read<AuthProvider>().completeOnboarding();
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save profile: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save profile: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _skipForNow() async {
+    setState(() => _isSkipping = true);
+    try {
+      // Deliberately does NOT call saveOnboarding() — backend is_onboarded
+      // stays false, so the user will be asked again on next login.
+      // Only local state flips, so the app proceeds for this session.
+      context.read<AuthProvider>().completeOnboarding();
+    } finally {
+      if (mounted) setState(() => _isSkipping = false);
     }
   }
 
@@ -154,16 +181,35 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(widget.isEditing ? 'Edit Personalization' : 'Personalize Your Care'),
+        title: Text(
+          widget.isEditing ? 'Edit Personalization' : 'Personalize Your Care',
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
         leading: widget.isEditing
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.textPrimary,
+                ),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
+        actions: widget.isEditing
+            ? null
+            : [
+                TextButton(
+                  onPressed: _isSkipping || _isLoading ? null : _skipForNow,
+                  child: _isSkipping
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Skip for now'),
+                ),
+              ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -179,17 +225,27 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Row(
                     children: const [
-                      Icon(Icons.auto_awesome_rounded, color: AppColors.primary, size: 24),
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        color: AppColors.primary,
+                        size: 24,
+                      ),
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'Environmental factors (PM2.5, PM10, AQI, humidity & pollen) are fetched automatically. '
                           'We only need your baseline characteristics to personalize your AI risk model.',
-                          style: TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.3),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                            height: 1.3,
+                          ),
                         ),
                       ),
                     ],
@@ -197,7 +253,6 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // SECTION 1: BASIC PROFILE
                 _buildSectionHeader('1. Basic Profile', Icons.person_outline),
                 _buildCard(
                   child: Column(
@@ -241,14 +296,21 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Age: $_age years', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                Text(
+                                  'Age: $_age years',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
                                 Slider(
                                   value: _age.toDouble(),
                                   min: 5,
                                   max: 95,
                                   divisions: 90,
                                   activeColor: AppColors.primary,
-                                  onChanged: (val) => setState(() => _age = val.round()),
+                                  onChanged: (val) =>
+                                      setState(() => _age = val.round()),
                                 ),
                               ],
                             ),
@@ -257,14 +319,24 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Sex', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                              const Text(
+                                'Sex',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
                               const SizedBox(height: 4),
                               DropdownButton<String>(
                                 value: _sex,
                                 items: ['Female', 'Male', 'Other'].map((s) {
-                                  return DropdownMenuItem(value: s, child: Text(s));
+                                  return DropdownMenuItem(
+                                    value: s,
+                                    child: Text(s),
+                                  );
                                 }).toList(),
-                                onChanged: (val) => setState(() => _sex = val ?? 'Female'),
+                                onChanged: (val) =>
+                                    setState(() => _sex = val ?? 'Female'),
                               ),
                             ],
                           ),
@@ -275,50 +347,91 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // SECTION 2: OCULAR ALLERGY HISTORY
-                _buildSectionHeader('2. Ocular Allergy History', Icons.visibility_outlined),
+                _buildSectionHeader(
+                  '2. Ocular Allergy History',
+                  Icons.visibility_outlined,
+                ),
                 _buildCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('History of Allergic Conjunctivitis / Itchy Eyes', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                        subtitle: const Text('Prior clinician diagnosis or recurrent eye allergies', style: TextStyle(fontSize: 12)),
+                      Material(
+                        color: Colors.transparent,
+                        child: SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text(
+                          'History of Allergic Conjunctivitis / Itchy Eyes',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          'Prior clinician diagnosis or recurrent eye allergies',
+                          style: TextStyle(fontSize: 12),
+                        ),
                         value: _previousAllergyHistory,
                         activeThumbColor: AppColors.primary,
-                        onChanged: (val) => setState(() => _previousAllergyHistory = val),
+                          onChanged: (val) =>
+                              setState(() => _previousAllergyHistory = val),
+                        ),
                       ),
                       if (_previousAllergyHistory) ...[
                         const Divider(height: 20),
-                        const Text('Typical Flare Frequency', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        const Text(
+                          'Typical Flare Frequency',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
-                          children: ['Frequent', 'Monthly', 'Seasonal', 'Rare'].map((freq) {
-                            final isSelected = _flareFrequency == freq;
-                            return ChoiceChip(
-                              label: Text(freq),
-                              selected: isSelected,
-                              selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                              onSelected: (_) => setState(() => _flareFrequency = freq),
-                            );
-                          }).toList(),
+                          children: ['Frequent', 'Monthly', 'Seasonal', 'Rare']
+                              .map((freq) {
+                                final isSelected = _flareFrequency == freq;
+                                return ChoiceChip(
+                                  label: Text(freq),
+                                  selected: isSelected,
+                                  selectedColor: AppColors.primary.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  onSelected: (_) =>
+                                      setState(() => _flareFrequency = freq),
+                                );
+                              })
+                              .toList(),
                         ),
                         const SizedBox(height: 14),
-                        const Text('Predominant Seasonal Pattern', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        const Text(
+                          'Predominant Seasonal Pattern',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
-                          children: ['Spring/Summer', 'Monsoon', 'Winter', 'All Year'].map((season) {
-                            final isSelected = _seasonalPattern == season;
-                            return ChoiceChip(
-                              label: Text(season),
-                              selected: isSelected,
-                              selectedColor: AppColors.accent.withValues(alpha: 0.2),
-                              onSelected: (_) => setState(() => _seasonalPattern = season),
-                            );
-                          }).toList(),
+                          children:
+                              [
+                                'Spring/Summer',
+                                'Monsoon',
+                                'Winter',
+                                'All Year',
+                              ].map((season) {
+                                final isSelected = _seasonalPattern == season;
+                                return ChoiceChip(
+                                  label: Text(season),
+                                  selected: isSelected,
+                                  selectedColor: AppColors.accent.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  onSelected: (_) =>
+                                      setState(() => _seasonalPattern = season),
+                                );
+                              }).toList(),
                         ),
                       ],
                     ],
@@ -326,30 +439,56 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // SECTION 3: EXPOSURE & SENSITIVITY
-                _buildSectionHeader('3. Exposure Sensitivities', Icons.grass_outlined),
+                _buildSectionHeader(
+                  '3. Exposure Sensitivities',
+                  Icons.grass_outlined,
+                ),
                 _buildCard(
                   child: Column(
                     children: [
-                      _buildCheckboxRow('Dust & Indoor Allergens', _dustSensitivity, (val) => setState(() => _dustSensitivity = val)),
+                      _buildCheckboxRow(
+                        'Dust & Indoor Allergens',
+                        _dustSensitivity,
+                        (val) => setState(() => _dustSensitivity = val),
+                      ),
                       const Divider(height: 12),
-                      _buildCheckboxRow('Pollen & Flowering Plants', _pollenSensitivity, (val) => setState(() => _pollenSensitivity = val)),
+                      _buildCheckboxRow(
+                        'Pollen & Flowering Plants',
+                        _pollenSensitivity,
+                        (val) => setState(() => _pollenSensitivity = val),
+                      ),
                       const Divider(height: 12),
-                      _buildCheckboxRow('Pet Dander Exposure', _petExposure, (val) => setState(() => _petExposure = val)),
+                      _buildCheckboxRow(
+                        'Pet Dander Exposure',
+                        _petExposure,
+                        (val) => setState(() => _petExposure = val),
+                      ),
                       const Divider(height: 12),
-                      _buildCheckboxRow('Smoke & Heavy Traffic Exhaust', _smokeExposure, (val) => setState(() => _smokeExposure = val)),
+                      _buildCheckboxRow(
+                        'Smoke & Heavy Traffic Exhaust',
+                        _smokeExposure,
+                        (val) => setState(() => _smokeExposure = val),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
 
-                // SECTION 4: BEHAVIOURAL HABITS
-                _buildSectionHeader('4. Daily Habits', Icons.directions_walk_outlined),
+                _buildSectionHeader(
+                  '4. Daily Habits',
+                  Icons.directions_walk_outlined,
+                ),
                 _buildCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Approximate Daily Outdoor Time: ${_outdoorHours.toStringAsFixed(1)} hrs', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      Text(
+                        'Approximate Daily Outdoor Time: ${_outdoorHours.toStringAsFixed(1)} hrs',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
                       Slider(
                         value: _outdoorHours,
                         min: 0.0,
@@ -359,29 +498,54 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
                         onChanged: (val) => setState(() => _outdoorHours = val),
                       ),
                       const Divider(height: 16),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Habitual Eye Rubbing Tendency', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                        subtitle: const Text('Do you frequently rub or touch your eyes when irritated?', style: TextStyle(fontSize: 12)),
+                      Material(
+                        color: Colors.transparent,
+                        child: SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text(
+                          'Habitual Eye Rubbing Tendency',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          'Do you frequently rub or touch your eyes when irritated?',
+                          style: TextStyle(fontSize: 12),
+                        ),
                         value: _eyeRubbingTendency,
                         activeThumbColor: AppColors.riskModerate,
-                        onChanged: (val) => setState(() => _eyeRubbingTendency = val),
+                          onChanged: (val) =>
+                              setState(() => _eyeRubbingTendency = val),
+                        ),
                       ),
                       const Divider(height: 12),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Contact Lens Wearer', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      Material(
+                        color: Colors.transparent,
+                        child: SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text(
+                          'Contact Lens Wearer',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
                         value: _contactLensUse,
                         activeThumbColor: AppColors.primary,
-                        onChanged: (val) => setState(() => _contactLensUse = val),
+                          onChanged: (val) =>
+                              setState(() => _contactLensUse = val),
+                        ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
 
-                // SECTION 5: MEDICATION
-                _buildSectionHeader('5. Medication (Optional)', Icons.medication_outlined),
+                _buildSectionHeader(
+                  '5. Medication (Optional)',
+                  Icons.medication_outlined,
+                ),
                 _buildCard(
                   child: TextFormField(
                     controller: _medicationController,
@@ -393,19 +557,23 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // SAVE BUTTON
                 ElevatedButton(
                   onPressed: _isLoading ? null : _saveProfile,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : Text(
                           widget.isEditing ? 'Save Changes' : 'SAVE & CONTINUE',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                 ),
                 const SizedBox(height: 32),
@@ -446,7 +614,11 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border),
         boxShadow: const [
-          BoxShadow(color: AppColors.shadowColor, blurRadius: 10, offset: Offset(0, 3))
+          BoxShadow(
+            color: AppColors.shadowColor,
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
         ],
       ),
       child: child,
@@ -457,7 +629,10 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        ),
         Checkbox(
           value: value,
           activeColor: AppColors.primary,

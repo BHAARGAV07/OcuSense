@@ -205,13 +205,13 @@ class EnvironmentalDataService:
                             "source": "google-pollen",
                             "error": None,
                         }
-                    logger.warning(
-                        "Google Pollen API failed: status=%s endpoint=/v1/forecast:lookup",
+                    logger.info(
+                        "Google Pollen API unavailable; continuing without pollen data: status=%s",
                         resp.status_code,
                     )
                     return EnvironmentalDataService._unavailable(fields, "google-pollen", f"HTTP {resp.status_code}")
             except Exception as e:
-                logger.warning("Google Pollen API failed: endpoint=/v1/forecast:lookup error=%s", e)
+                logger.info("Google Pollen API unavailable; continuing without pollen data: %s", e)
                 return EnvironmentalDataService._unavailable(fields, "google-pollen", str(e))
 
         return EnvironmentalDataService._unavailable(fields, "google-pollen", "GOOGLE_POLLEN_API_KEY not configured")

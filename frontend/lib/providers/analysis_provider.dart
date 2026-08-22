@@ -61,22 +61,22 @@ class AnalysisProvider extends ChangeNotifier {
   String? get predictionErrorMessage => _predictionErrorMessage;
   String? get ocularErrorMessage => _ocularErrorMessage;
 
-  Future<void> fetchDashboardData() async {
+  Future<void> fetchDashboardData({double? lat, double? lon}) async {
     await Future.wait([
-      fetchRiskAnalysis(),
+      fetchRiskAnalysis(lat: lat, lon: lon),
       fetchTriggers(),
-      fetchCombinedData(),
+      fetchCombinedData(lat: lat, lon: lon),
       fetchMlHistory(),
     ]);
   }
 
-  Future<void> fetchRiskAnalysis() async {
+  Future<void> fetchRiskAnalysis({double? lat, double? lon}) async {
     _isLoadingRisk = true;
     _riskErrorMessage = null;
     notifyListeners();
 
     try {
-      _riskAnalysis = await _analysisService.getRiskAnalysis();
+      _riskAnalysis = await _analysisService.getRiskAnalysis(lat: lat, lon: lon);
     } on ApiException catch (e) {
       _riskErrorMessage = e.message;
     } catch (e) {
@@ -123,7 +123,7 @@ class AnalysisProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Future<void> fetchCombinedData({double lat = 13.0827, double lon = 80.2707}) async {
+  Future<void> fetchCombinedData({double? lat, double? lon}) async {
     try {
       _combinedData = await _analysisService.getCombinedData(lat: lat, lon: lon);
       notifyListeners();

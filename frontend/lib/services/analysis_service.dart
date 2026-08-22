@@ -7,11 +7,13 @@ class AnalysisService {
 
   AnalysisService(this._apiClient);
 
-  Future<RiskAnalysis> getRiskAnalysis({double lat = 13.0827, double lon = 80.2707}) async {
-    final res = await _apiClient.get(
-      '/api/analysis/risk',
-      queryParams: {'lat': lat.toString(), 'lon': lon.toString()},
-    );
+  Future<RiskAnalysis> getRiskAnalysis({double? lat, double? lon}) async {
+    final queryParams = <String, String>{};
+    if (lat != null && lon != null) {
+      queryParams['lat'] = lat.toString();
+      queryParams['lon'] = lon.toString();
+    }
+    final res = await _apiClient.get('/api/analysis/risk', queryParams: queryParams);
     return RiskAnalysis.fromJson(res);
   }
 
@@ -33,11 +35,13 @@ class AnalysisService {
     return [];
   }
 
-  Future<Map<String, dynamic>> getCombinedData({double lat = 13.0827, double lon = 80.2707}) async {
-    final res = await _apiClient.get(
-      '/api/analysis/combined-data',
-      queryParams: {'lat': lat.toString(), 'lon': lon.toString()},
-    );
+  Future<Map<String, dynamic>> getCombinedData({double? lat, double? lon}) async {
+    final queryParams = <String, String>{};
+    if (lat != null && lon != null) {
+      queryParams['lat'] = lat.toString();
+      queryParams['lon'] = lon.toString();
+    }
+    final res = await _apiClient.get('/api/analysis/combined-data', queryParams: queryParams);
     return res as Map<String, dynamic>;
   }
 }

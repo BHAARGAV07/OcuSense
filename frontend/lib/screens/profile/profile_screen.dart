@@ -125,7 +125,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 28),
 
-              // Action Buttons: Edit Profile, Personalization & Logout
+              _buildSettingsSection(
+                context,
+                icon: Icons.tune_rounded,
+                title: 'Personalization',
+                subtitle: 'Answer questions about allergies, habits, and exposure to improve your risk estimate.',
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PersonalizationScreen(isEditing: true)),
+                  );
+                },
+              ),
+              const SizedBox(height: 14),
+
+              // Action Buttons: Edit Profile & Logout
               ElevatedButton.icon(
                 onPressed: () async {
                   await Navigator.push(
@@ -206,6 +220,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsSection(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: AppColors.primary, size: 26),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 4),
+                    Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, height: 1.3)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+            ],
+          ),
+        ),
       ),
     );
   }

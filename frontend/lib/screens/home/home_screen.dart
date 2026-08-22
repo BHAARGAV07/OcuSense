@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../providers/analysis_provider.dart';
 import '../../providers/patient_provider.dart';
 import '../../theme/app_colors.dart';
@@ -22,9 +23,30 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AnalysisProvider>(context, listen: false).fetchDashboardData();
+      _loadDashboardData();
       Provider.of<PatientProvider>(context, listen: false).fetchProfile();
     });
+  }
+
+  Future<void> _loadDashboardData() async {
+    Position? position;
+    try {
+      if (await Geolocator.isLocationServiceEnabled()) {
+        var permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
+        if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
+          position = await Geolocator.getCurrentPosition();
+        }
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+    await context.read<AnalysisProvider>().fetchDashboardData(
+          lat: position?.latitude,
+          lon: position?.longitude,
+        );
   }
 
   @override
@@ -40,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: RefreshIndicator(
           onRefresh: () async {
             await Future.wait([
-              analysisProvider.fetchDashboardData(),
+              _loadDashboardData(),
               patientProvider.fetchProfile(),
             ]);
           },
@@ -92,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   mlPrediction: analysisProvider.latestPrediction,
                   isLoading: analysisProvider.isLoadingRisk,
                   errorMessage: analysisProvider.riskErrorMessage,
-                  onRetry: () => analysisProvider.fetchRiskAnalysis(),
+                  onRetry: () => _loadDashboardData(),
                   onCheckEyes: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const EyeCheckFlowScreen()));
                   },

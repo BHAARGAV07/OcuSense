@@ -77,7 +77,7 @@ class ApiClient {
           .timeout(ApiConfig.timeoutDuration);
       return await _processResponse(
         response,
-        onRetry: isRetry || isAuthEndpoint
+        onRetry: isRetry || isAuthEndpoint || _authToken == null || _authToken!.isEmpty
             ? null
             : () => get(endpoint, headers: headers, queryParams: queryParams, isAuthEndpoint: isAuthEndpoint, isRetry: true),
       );
@@ -111,7 +111,7 @@ class ApiClient {
           .timeout(ApiConfig.timeoutDuration);
       return await _processResponse(
         response,
-        onRetry: isRetry || isAuthEndpoint
+        onRetry: isRetry || isAuthEndpoint || _authToken == null || _authToken!.isEmpty
             ? null
             : () => post(endpoint, body: body, headers: headers, isAuthEndpoint: isAuthEndpoint, isRetry: true),
       );
@@ -145,7 +145,7 @@ class ApiClient {
           .timeout(ApiConfig.timeoutDuration);
       return await _processResponse(
         response,
-        onRetry: isRetry || isAuthEndpoint
+        onRetry: isRetry || isAuthEndpoint || _authToken == null || _authToken!.isEmpty
             ? null
             : () => patch(endpoint, body: body, headers: headers, isAuthEndpoint: isAuthEndpoint, isRetry: true),
       );
@@ -177,7 +177,7 @@ class ApiClient {
           .timeout(ApiConfig.timeoutDuration);
       return await _processResponse(
         response,
-        onRetry: isRetry || isAuthEndpoint
+        onRetry: isRetry || isAuthEndpoint || _authToken == null || _authToken!.isEmpty
             ? null
             : () => delete(endpoint, headers: headers, isAuthEndpoint: isAuthEndpoint, isRetry: true),
       );

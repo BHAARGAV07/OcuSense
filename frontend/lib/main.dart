@@ -43,6 +43,10 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
+        // Makes PersonalizationService available via context.read<PersonalizationService>()
+        // anywhere in the widget tree, so no screen ever needs to construct its own.
+        Provider<PersonalizationService>.value(value: personalizationService),
+
         ChangeNotifierProvider(
           create: (_) => AuthProvider(
             authService,
@@ -50,9 +54,7 @@ void main() {
             personalizationService: personalizationService,
           )..initializeAuth(),
         ),
-        ChangeNotifierProvider(
-          create: (_) => PatientProvider(patientService),
-        ),
+        ChangeNotifierProvider(create: (_) => PatientProvider(patientService)),
         ChangeNotifierProvider(
           create: (_) => AnalysisProvider(
             analysisService,
@@ -85,9 +87,7 @@ class OcuSenseApp extends StatelessWidget {
         builder: (context, auth, _) {
           if (auth.status == AuthStatus.uninitialized) {
             return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
+              body: Center(child: CircularProgressIndicator()),
             );
           }
           if (auth.isAuthenticated) {

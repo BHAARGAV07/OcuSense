@@ -49,6 +49,9 @@ class MLPredictionEngine(PredictionEngine):
         self._load_or_train()
 
     def _load_or_train(self):
+        if joblib is None or np is None:
+            logger.info("ML dependencies unavailable; using rule-based prediction fallback")
+            return
         if os.path.exists(self.model_path):
             try:
                 self.bundle = joblib.load(self.model_path)
@@ -71,7 +74,7 @@ class MLPredictionEngine(PredictionEngine):
             self._load_or_train()
 
         if not self.bundle:
-            raise RuntimeError("ML model is unavailable.")
+            return RuleBasedPredictionEngine().predict(features)
 
         preprocessor = self.bundle["preprocessor"]
         classifier = self.bundle["classifier"]
@@ -259,7 +262,7 @@ class RuleBasedPredictionEngine(PredictionEngine):
 
         return {
             "engine": "rule_based",
-            "risk_probability": float(np.round(probability, 2)),
+            "risk_probability": round(probability, 2),
             "risk_score_percentage": score,
             "risk_level": level,
             "prediction_window": "Current state heuristics",
