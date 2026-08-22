@@ -7,9 +7,15 @@ from pydantic import BaseModel, Field
 from app.ml.data.schema import PredictionFeatures
 
 
+class LocationIn(BaseModel):
+    lat: float
+    lon: float
+
+
 class PredictionRequest(BaseModel):
     features: PredictionFeatures
     engine: Optional[str] = Field(None, description="'ml' (default) or 'rule'")
+    location: Optional[LocationIn] = Field(None, description="Current device location used for live environmental forecast enrichment")
     environmental_snapshot: Optional[Dict[str, Any]] = Field(None, description="Raw environmental service payload used for this prediction")
 
 

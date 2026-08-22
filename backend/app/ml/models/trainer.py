@@ -24,7 +24,8 @@ DEFAULT_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "ocular_risk_v0.1_prototype.job
 def _prepare_labeled_dataset(df: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray, str]:
     """Convert supported labeled datasets to the model's canonical columns."""
     if "Flare" in df.columns:
-        return df, df["Flare"].values.astype(int), "prototype benchmark dataset"
+        source = "OcuSense 60-row labeled prototype dataset" if "Risk_Label" in df.columns else "prototype benchmark dataset"
+        return df, df["Flare"].values.astype(int), source
 
     required_columns = {"Risk_Label", "PM2.5_ug_m3", "PM10_ug_m3", "AQI", "Pollen_Index"}
     missing_columns = required_columns.difference(df.columns)

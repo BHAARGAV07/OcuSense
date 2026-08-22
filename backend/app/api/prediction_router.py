@@ -21,6 +21,7 @@ from app.schemas.prediction import (
 from app.ml.services.prediction_engine import get_prediction_engine, MLPredictionEngine, RuleBasedPredictionEngine
 from app.ml.data.schema import PredictionFeatures
 from app.services.aggregation_service import DataAggregationService
+from app.services.environmental_service import EnvironmentalDataService
 
 router = APIRouter(prefix="/api/prediction", tags=["Prediction"])
 
@@ -29,11 +30,14 @@ def _environment_snapshot_from_features(features: PredictionFeatures) -> dict:
     return {
         "pm25": features.environment.pm25,
         "pm10": features.environment.pm10,
+        "no2": features.environment.no2,
+        "o3": features.environment.o3,
         "aqi": features.environment.aqi,
         "temperature": features.environment.temperature,
         "humidity": features.environment.humidity,
         "uv": features.environment.uv,
         "pollen": features.environment.pollen,
+        "pollen_index": features.environment.pollen_index,
         "weather": features.environment.weather,
         "missing_fields": features.metadata.get("environment_missing_fields", []),
         "source": features.metadata.get("environment_source", "request_features"),
@@ -47,8 +51,25 @@ def _optional_float(value, default=None):
         return default
 
 
+def _apply_environment_to_features(features: PredictionFeatures, env_api: dict) -> None:
+    features.environment.pm25 = _optional_float(env_api.get("pm25"), features.environment.pm25)
+    features.environment.pm10 = _optional_float(env_api.get("pm10") or env_api.get("dust_numeric"), features.environment.pm10)
+    features.environment.no2 = _optional_float(env_api.get("no2"), features.environment.no2)
+    features.environment.o3 = _optional_float(env_api.get("o3"), features.environment.o3)
+    features.environment.aqi = _optional_float(env_api.get("aqi_numeric") or env_api.get("aqi"), features.environment.aqi)
+    features.environment.temperature = _optional_float(env_api.get("temperature"), features.environment.temperature)
+    features.environment.humidity = _optional_float(env_api.get("humidity"), features.environment.humidity)
+    features.environment.uv = _optional_float(env_api.get("uv"), features.environment.uv)
+    features.environment.pollen = str(env_api.get("pollen")).capitalize() if env_api.get("pollen") else features.environment.pollen
+    features.environment.pollen_index = _optional_float(env_api.get("pollen_index"), features.environment.pollen_index)
+    features.environment.weather = env_api.get("weather") or features.environment.weather
+    features.metadata["environment_missing_fields"] = env_api.get("missing_fields", [])
+    features.metadata["environment_source"] = env_api.get("sources", {})
+    features.metadata["environment_forecast_window"] = env_api.get("forecast_window")
+
+
 @router.post("", response_model=PredictionResponse)
-def generate_prediction(
+async def generate_prediction(
     body: PredictionRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -57,7 +78,15 @@ def generate_prediction(
     Executes flare-risk prediction using the specified or default PredictionEngine (ML).
     Saves the prediction record and reproducible feature snapshot.
     """
-    environmental_snapshot = body.environmental_snapshot or _environment_snapshot_from_features(body.features)
+    if body.location:
+        environmental_snapshot = await EnvironmentalDataService.get_environmental_data(
+            lat=body.location.lat,
+            lon=body.location.lon,
+        )
+        _apply_environment_to_features(body.features, environmental_snapshot)
+    else:
+        environmental_snapshot = body.environmental_snapshot or _environment_snapshot_from_features(body.features)
+
     if environmental_snapshot.get("missing_fields"):
         body.features.metadata["environment_missing_fields"] = environmental_snapshot["missing_fields"]
 
@@ -114,10 +143,13 @@ async def compare_prediction_engines(
     features = PredictionFeatures()
     features.environment.pm25 = _optional_float(env_api.get("pm25"))
     features.environment.pm10 = _optional_float(env_api.get("pm10") or env_api.get("dust_numeric"))
+    features.environment.no2 = _optional_float(env_api.get("no2"))
+    features.environment.o3 = _optional_float(env_api.get("o3"))
     features.environment.aqi = _optional_float(env_api.get("aqi_numeric"))
     features.environment.temperature = _optional_float(env_hw.get("temperature"), _optional_float(env_api.get("temperature")))
     features.environment.humidity = _optional_float(env_hw.get("humidity"), _optional_float(env_api.get("humidity")))
     features.environment.pollen = str(env_api.get("pollen")).capitalize() if env_api.get("pollen") else None
+    features.environment.pollen_index = _optional_float(env_api.get("pollen_index"))
     features.environment.weather = env_api.get("weather")
     features.metadata["environment_missing_fields"] = env_api.get("missing_fields", [])
     features.metadata["environment_source"] = env_api.get("sources", {})

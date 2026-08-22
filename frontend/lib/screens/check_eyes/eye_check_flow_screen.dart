@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/analysis_provider.dart';
@@ -19,6 +20,7 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
   bool _isProcessing = false;
   OcularAnalysisResult? _analysisResult;
   String? _errorMessage;
+  String? _locationStatus;
 
   // Minimal Subjective Symptoms State (<30s)
   int _itching = 1;      // 0: None, 1: Mild, 2: Mod, 3: Sev
@@ -94,21 +96,29 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
     });
 
     final analysisProvider = Provider.of<AnalysisProvider>(context, listen: false);
+    final position = await _getCurrentPosition();
 
     // Fetch fresh environmental readings. Values are passed through exactly as
     // returned by the live API; unavailable values stay null rather than being
     // replaced by demo constants.
-    await analysisProvider.fetchCombinedData();
+    if (position != null) {
+      await analysisProvider.fetchCombinedData(lat: position.latitude, lon: position.longitude);
+    } else {
+      await analysisProvider.fetchCombinedData();
+    }
     final envData = analysisProvider.combinedData?['environment_api'] as Map<String, dynamic>?;
 
     double? asDouble(dynamic value) => value is num ? value.toDouble() : null;
 
     final pm25 = asDouble(envData?['pm25']);
     final pm10 = asDouble(envData?['pm10']) ?? asDouble(envData?['dust_numeric']);
+    final no2 = asDouble(envData?['no2']);
+    final o3 = asDouble(envData?['o3']);
     final aqi = asDouble(envData?['aqi_numeric']) ?? asDouble(envData?['aqi']);
     final humidity = asDouble(envData?['humidity']);
     final temp = asDouble(envData?['temperature']);
     final pollen = envData?['pollen'];
+    final pollenIndex = asDouble(envData?['pollen_index']);
 
     final canonicalPayload = {
       'ocular': {
@@ -130,16 +140,20 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
       'environment': {
         'pm25': pm25,
         'pm10': pm10,
+        'no2': no2,
+        'o3': o3,
         'aqi': aqi,
         'temperature': temp,
         'humidity': humidity,
         'uv': asDouble(envData?['uv']),
         'pollen': pollen,
+        'pollen_index': pollenIndex,
         'weather': envData?['weather'],
       },
       'metadata': {
         'environment_missing_fields': envData?['missing_fields'] ?? [],
         'environment_source': envData?['sources'] ?? {},
+        'location': position == null ? null : {'lat': position.latitude, 'lon': position.longitude},
       },
       'exposure': {
         'outdoor_exposure': 3.0,
@@ -160,6 +174,8 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
 
     final predResult = await analysisProvider.runCanonicalPrediction(
       canonicalFeatures: canonicalPayload,
+      lat: position?.latitude,
+      lon: position?.longitude,
     );
 
     if (mounted) {
@@ -177,6 +193,33 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
         );
         Navigator.pop(context);
       }
+    }
+  }
+
+  Future<Position?> _getCurrentPosition() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() => _locationStatus = 'Location services are off; using fallback environmental coordinates.');
+        return null;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        setState(() => _locationStatus = 'Location permission denied; using fallback environmental coordinates.');
+        return null;
+      }
+
+      setState(() => _locationStatus = 'Fetching local pollen and air-quality forecast...');
+      return Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+    } catch (_) {
+      setState(() => _locationStatus = 'Unable to read current location; using fallback environmental coordinates.');
+      return null;
     }
   }
 
@@ -540,19 +583,27 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
         padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            CircularProgressIndicator(strokeWidth: 3, color: AppColors.primary),
-            SizedBox(height: 24),
-            Text(
+          children: [
+            const CircularProgressIndicator(strokeWidth: 3, color: AppColors.primary),
+            const SizedBox(height: 24),
+            const Text(
               'Multivariable ML Prediction Engine',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
-            SizedBox(height: 8),
-            Text(
-              'Integrating objective redness, minimal symptoms, environmental telemetry & personalized susceptibility...',
+            const SizedBox(height: 8),
+            const Text(
+              'Integrating objective redness, minimal symptoms, local pollen, air-quality forecast & personalized susceptibility...',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4),
             ),
+            if (_locationStatus != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _locationStatus!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, height: 1.3),
+              ),
+            ],
           ],
         ),
       ),

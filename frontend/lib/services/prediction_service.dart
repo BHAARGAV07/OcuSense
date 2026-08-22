@@ -9,14 +9,15 @@ class PredictionService {
   Future<MLPredictionResult> generatePrediction({
     required Map<String, dynamic> canonicalFeatures,
     String? engine,
+    double? lat,
+    double? lon,
   }) async {
-    final res = await _apiClient.post(
-      '/api/prediction',
-      body: {
-        'features': canonicalFeatures,
-        'engine': engine,
-      },
-    );
+    final body = {
+      'features': canonicalFeatures,
+      'engine': engine,
+      if (lat != null && lon != null) 'location': {'lat': lat, 'lon': lon},
+    };
+    final res = await _apiClient.post('/api/prediction', body: body);
     return MLPredictionResult.fromJson(res);
   }
 

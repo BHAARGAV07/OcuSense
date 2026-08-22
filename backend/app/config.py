@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     GOOGLE_POLLEN_API_KEY: Optional[str] = None
+    GOOGLE_AIR_QUALITY_API_KEY: Optional[str] = None
 
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
@@ -35,6 +36,8 @@ class Settings(BaseSettings):
     # Literature-Informed Reference Guidelines (Annotations only, not diagnostic cut-offs)
     LITERATURE_PM25_REF: float = 45.0
     LITERATURE_PM10_REF: float = 70.0
+    LITERATURE_NO2_REF: float = 27.0
+    LITERATURE_O3_REF: float = 88.0
     LITERATURE_HUMIDITY_REF: float = 60.0
 
     model_config = SettingsConfigDict(

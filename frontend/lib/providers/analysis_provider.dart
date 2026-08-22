@@ -123,9 +123,9 @@ class AnalysisProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Future<void> fetchCombinedData() async {
+  Future<void> fetchCombinedData({double lat = 13.0827, double lon = 80.2707}) async {
     try {
-      _combinedData = await _analysisService.getCombinedData();
+      _combinedData = await _analysisService.getCombinedData(lat: lat, lon: lon);
       notifyListeners();
     } catch (_) {}
   }
@@ -163,6 +163,8 @@ class AnalysisProvider extends ChangeNotifier {
   Future<MLPredictionResult?> runCanonicalPrediction({
     required Map<String, dynamic> canonicalFeatures,
     String? engine,
+    double? lat,
+    double? lon,
   }) async {
     _isLoadingPrediction = true;
     _predictionErrorMessage = null;
@@ -172,6 +174,8 @@ class AnalysisProvider extends ChangeNotifier {
       _latestPrediction = await _predictionService.generatePrediction(
         canonicalFeatures: canonicalFeatures,
         engine: engine,
+        lat: lat,
+        lon: lon,
       );
       await fetchMlHistory();
       return _latestPrediction;

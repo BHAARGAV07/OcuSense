@@ -119,6 +119,8 @@ class MLPredictionEngine(PredictionEngine):
         literature_refs = {
             "pm25": reference_payload(features.environment.pm25, settings.LITERATURE_PM25_REF, "µg/m³"),
             "pm10": reference_payload(features.environment.pm10, settings.LITERATURE_PM10_REF, "µg/m³"),
+            "no2": reference_payload(features.environment.no2, settings.LITERATURE_NO2_REF, "µg/m³"),
+            "o3": reference_payload(features.environment.o3, settings.LITERATURE_O3_REF, "µg/m³"),
             "humidity": reference_payload(features.environment.humidity, settings.LITERATURE_HUMIDITY_REF, "%"),
         }
 

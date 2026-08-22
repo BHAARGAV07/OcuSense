@@ -26,6 +26,8 @@
 	<string>$(PRODUCT_COPYRIGHT)</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
+	<key>NSLocationUsageDescription</key>
+	<string>OcuSense uses your current location to fetch local pollen and air-quality forecasts for flare-risk estimates.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>
