@@ -94,7 +94,12 @@ class RiskCard extends StatelessWidget {
     final scorePct = mlPrediction != null
         ? mlPrediction!.riskScorePercentage
         : (riskAnalysis?.riskScore ?? 0);
-    final modelVer = mlPrediction?.modelVersion ?? 'ocular-risk-v0.1-prototype';
+    final modelVer = mlPrediction?.modelVersion ?? riskAnalysis?.modelVersion ?? 'model unavailable';
+    final engine = mlPrediction != null ? 'ml' : (riskAnalysis?.predictionEngine ?? 'unavailable');
+    final pollenAvailable = riskAnalysis?.dataAvailability['pollen'] == true;
+    final pollenLabel = pollenAvailable
+        ? (riskAnalysis?.environment['pollen']?.toString() ?? 'Available')
+        : 'Pollen data unavailable';
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -120,7 +125,7 @@ class RiskCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'AI FLARE-RISK ESTIMATE',
+                    engine == 'ml' ? 'ML FLARE-RISK ESTIMATE' : 'RISK DATA STATUS',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.1,
@@ -185,9 +190,11 @@ class RiskCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Personalized multivariate estimate derived from objective ocular redness, minimal symptoms & real-time environmental exposure.',
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.3),
+          Text(
+            engine == 'ml'
+                ? 'Personalized prototype estimate from available patient, symptom, history, and live environmental signals. $pollenLabel.'
+                : 'Prediction engine unavailable. Showing environmental observations where available. $pollenLabel.',
+            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.3),
           ),
           const SizedBox(height: 16),
           const Divider(color: AppColors.divider),

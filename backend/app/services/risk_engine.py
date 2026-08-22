@@ -6,6 +6,11 @@ class RiskEngine:
     @staticmethod
     def calculate_risk(combined_data: Dict[str, Any], observation_count: int = 10) -> Dict[str, Any]:
         """
+        RESEARCH / LEGACY RULE-BASED ENGINE.
+
+        Preserved for historical comparisons only. The primary
+        /api/analysis/risk endpoint uses the ML prediction pipeline instead.
+
         Takes RuleEngine contributions and produces a final score (0-100),
         risk_level (low/moderate/high/very high), and contributing factors list.
         """

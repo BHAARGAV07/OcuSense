@@ -168,8 +168,8 @@ async def compare_prediction_engines(
     rule_res = rule_engine.predict(features)
 
     note = (
-        "ML Engine evaluates continuous multivariable interactions and returns calibrated probabilities, "
-        "whereas the Rule-Based engine relies on hardcoded discrete thresholds."
+        "ML Engine evaluates continuous multivariable interactions and returns prototype probabilities, "
+        "whereas the research-only Rule-Based engine relies on hardcoded discrete thresholds."
     )
 
     return {

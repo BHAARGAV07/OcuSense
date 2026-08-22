@@ -36,7 +36,7 @@ class PredictionResponse(BaseModel):
     risk_level: str  # LOW, MODERATE, HIGH
     prediction_window: str
     model_version: str
-    confidence: float
+    confidence: Optional[float] = None
     prediction_mode: str
     top_contributing_features: List[ContributingFactorOut]
     literature_references: Optional[Dict[str, Any]] = None

@@ -40,8 +40,11 @@ class MLPredictionEngine(PredictionEngine):
     Primary Multivariable ML Prediction Engine.
     Uses trained model artifact with reproducible preprocessing and explainability.
     """
-    def __init__(self, model_path: str = DEFAULT_MODEL_PATH):
-        self.model_path = model_path
+    def __init__(self, model_path: Optional[str] = None):
+        configured_path = settings.MODEL_ARTIFACT_PATH
+        if model_path is None and configured_path:
+            model_path = configured_path
+        self.model_path = model_path or DEFAULT_MODEL_PATH
         self.bundle: Optional[Dict[str, Any]] = None
         self._load_or_train()
 
@@ -85,7 +88,8 @@ class MLPredictionEngine(PredictionEngine):
         # Class 1 is Flare
         risk_probability = float(np.round(proba_classes[1] if len(proba_classes) > 1 else proba_classes[0], 4))
 
-        # 4. Stratify into Prototype Risk Bands
+        # 4. Stratify into prototype, configurable display bands.
+        # These are product calibration parameters, not clinical thresholds.
         low_th = settings.RISK_LOW_THRESHOLD
         high_th = settings.RISK_HIGH_THRESHOLD
 
@@ -134,12 +138,13 @@ class MLPredictionEngine(PredictionEngine):
             "risk_level": risk_level,
             "prediction_window": settings.PREDICTION_WINDOW,
             "model_version": self.bundle.get("model_version", settings.MODEL_VERSION),
-            "confidence": 0.85,
+            # The prototype classifier does not provide calibrated confidence.
+            "confidence": None,
             "prediction_mode": "prototype_multivariable_ml",
             "top_contributing_features": top_factors,
             "literature_references": literature_refs,
             "preventive_guidance": guidance,
-            "disclaimer": "Prototype AI risk estimate; not a diagnosis or clinically validated prediction."
+            "disclaimer": "Prototype ML risk estimate; not a medical diagnosis or clinically validated prediction."
         }
 
     def _generate_guidance(self, risk_level: str, features: PredictionFeatures) -> List[str]:
@@ -274,8 +279,4 @@ def get_prediction_engine(engine_type: Optional[str] = None) -> PredictionEngine
     selected = engine_type or settings.PREDICTION_ENGINE
     if selected.lower() == "rule" or selected.lower() == "rule_based":
         return RuleBasedPredictionEngine()
-    try:
-        return MLPredictionEngine()
-    except Exception as e:
-        logger.warning(f"ML engine initialization failed ({e}), falling back to RuleBasedPredictionEngine.")
-        return RuleBasedPredictionEngine()
+    return MLPredictionEngine()

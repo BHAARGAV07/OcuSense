@@ -1,4 +1,11 @@
-from typing import Dict, Any, List
+"""
+RESEARCH / LEGACY RULE-BASED ENGINE.
+
+This module is preserved for developer comparison tests only. It must not be
+used as the primary /api/analysis/risk calculation path.
+"""
+
+from typing import Dict, Any
 from app.config import settings
 
 # Configurable Rule Weights

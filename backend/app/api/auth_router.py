@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import User, PatientProfile
+from app.models import User, Patient, PatientProfile
 from app.schemas.auth import UserRegister, UserLogin, RefreshTokenRequest, TokenResponse, RegisterResponse
 from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_token
 
@@ -34,6 +34,9 @@ def register_user(body: UserRegister, db: Session = Depends(get_db)):
         display_name=body.email.split("@")[0]
     )
     db.add(new_profile)
+    # Legacy symptom and habit tables reference patients.id. Keep that
+    # identity aligned with the authenticated user created above.
+    db.add(Patient(id=new_user.id, name=new_profile.display_name, email=new_user.email))
     db.commit()
     db.refresh(new_user)
 

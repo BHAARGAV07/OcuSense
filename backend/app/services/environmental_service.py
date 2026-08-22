@@ -37,9 +37,10 @@ class EnvironmentalDataService:
                         "source": "open-meteo-weather",
                         "error": None,
                     }
+                logger.warning("Open-Meteo weather failed: status=%s endpoint=/v1/forecast", resp.status_code)
                 return EnvironmentalDataService._unavailable(fields, "open-meteo-weather", f"HTTP {resp.status_code}")
         except Exception as e:
-            logger.warning(f"Failed to fetch Open-Meteo weather data: {e}")
+            logger.warning("Open-Meteo weather failed: endpoint=/v1/forecast error=%s", e)
             return EnvironmentalDataService._unavailable(fields, "open-meteo-weather", str(e))
 
         return EnvironmentalDataService._unavailable(fields, "open-meteo-weather")
@@ -68,9 +69,10 @@ class EnvironmentalDataService:
                         "source": "open-meteo-air-quality",
                         "error": None,
                     }
+                logger.warning("Open-Meteo air quality failed: status=%s endpoint=/v1/air-quality", resp.status_code)
                 return EnvironmentalDataService._unavailable(fields, "open-meteo-air-quality", f"HTTP {resp.status_code}")
         except Exception as e:
-            logger.warning(f"Failed to fetch Open-Meteo air quality: {e}")
+            logger.warning("Open-Meteo air quality failed: endpoint=/v1/air-quality error=%s", e)
             return EnvironmentalDataService._unavailable(fields, "open-meteo-air-quality", str(e))
 
         return EnvironmentalDataService._unavailable(fields, "open-meteo-air-quality")
@@ -132,6 +134,10 @@ class EnvironmentalDataService:
             async with httpx.AsyncClient(timeout=8.0) as client:
                 resp = await client.post(url, json=body)
                 if resp.status_code != 200:
+                    logger.warning(
+                        "Google Air Quality API failed: status=%s endpoint=/v1/forecast:lookup",
+                        resp.status_code,
+                    )
                     return EnvironmentalDataService._unavailable(fields, "google-air-quality-forecast", f"HTTP {resp.status_code}")
                 hourly = resp.json().get("hourlyForecasts", [])
                 if not hourly:
@@ -161,12 +167,13 @@ class EnvironmentalDataService:
                     "error": None,
                 }
         except Exception as e:
-            logger.warning(f"Failed to fetch Google Air Quality forecast: {e}")
+            logger.warning("Google Air Quality API failed: endpoint=/v1/forecast:lookup error=%s", e)
             return EnvironmentalDataService._unavailable(fields, "google-air-quality-forecast", str(e))
 
     @staticmethod
     async def fetch_google_pollen(lat: float = 13.0827, lon: float = 80.2707) -> Dict[str, Any]:
         """Fetch pollen levels from Google Pollen API using server API key."""
+        fields = ["pollen", "pollen_index"]
         key = settings.GOOGLE_POLLEN_API_KEY
         if key and key != "string":
             try:
@@ -198,12 +205,16 @@ class EnvironmentalDataService:
                             "source": "google-pollen",
                             "error": None,
                         }
-                    return EnvironmentalDataService._unavailable(["pollen"], "google-pollen", f"HTTP {resp.status_code}")
+                    logger.warning(
+                        "Google Pollen API failed: status=%s endpoint=/v1/forecast:lookup",
+                        resp.status_code,
+                    )
+                    return EnvironmentalDataService._unavailable(fields, "google-pollen", f"HTTP {resp.status_code}")
             except Exception as e:
-                logger.warning(f"Failed to fetch Google Pollen API: {e}")
-                return EnvironmentalDataService._unavailable(["pollen"], "google-pollen", str(e))
+                logger.warning("Google Pollen API failed: endpoint=/v1/forecast:lookup error=%s", e)
+                return EnvironmentalDataService._unavailable(fields, "google-pollen", str(e))
 
-        return EnvironmentalDataService._unavailable(["pollen"], "google-pollen", "GOOGLE_POLLEN_API_KEY not configured")
+        return EnvironmentalDataService._unavailable(fields, "google-pollen", "GOOGLE_POLLEN_API_KEY not configured")
 
     @classmethod
     async def get_environmental_data(cls, lat: float = 13.0827, lon: float = 80.2707) -> Dict[str, Any]:

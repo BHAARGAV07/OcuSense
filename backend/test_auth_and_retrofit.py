@@ -7,7 +7,7 @@ client = TestClient(app)
 
 import uuid
 
-def test_step_3_register():
+def run_step_3_register():
     print("\n--- Testing Step 3: POST /api/auth/register ---")
     uid = uuid.uuid4().hex[:8]
     email_a = f"usera_{uid}@example.com"
@@ -35,7 +35,7 @@ def test_step_3_register():
     return data_a["user_id"], resp_b.json()["user_id"], email_a, email_b
 
 
-def test_step_3_login(email_a: str, email_b: str):
+def run_step_3_login(email_a: str, email_b: str):
     print("\n--- Testing Step 3: POST /api/auth/login & /refresh ---")
     
     # 1. Login with bad password (Expect 401)
@@ -71,7 +71,7 @@ def test_step_3_login(email_a: str, email_b: str):
     return tokens_a["access_token"], tokens_b["access_token"]
 
 
-def test_step_4_patient_profiles(token_a):
+def run_step_4_patient_profiles(token_a):
     print("\n--- Testing Step 4: GET/POST/PATCH /api/patients/me ---")
     headers_a = {"Authorization": f"Bearer {token_a}"}
 
@@ -92,7 +92,7 @@ def test_step_4_patient_profiles(token_a):
     print("[SUCCESS] Patient Profile Management Passed!")
 
 
-def test_step_5_retrofit_analysis_protection(token_a, user_b_id):
+def run_step_5_retrofit_analysis_protection(token_a, user_b_id):
     print("\n--- Testing Step 5: Protected Analysis Routes & ID Isolation ---")
     headers_a = {"Authorization": f"Bearer {token_a}"}
 
@@ -128,8 +128,8 @@ def test_step_5_retrofit_analysis_protection(token_a, user_b_id):
 
 
 if __name__ == "__main__":
-    user_a_id, user_b_id, email_a, email_b = test_step_3_register()
-    token_a, token_b = test_step_3_login(email_a, email_b)
-    test_step_4_patient_profiles(token_a)
-    test_step_5_retrofit_analysis_protection(token_a, user_b_id)
+    user_a_id, user_b_id, email_a, email_b = run_step_3_register()
+    token_a, token_b = run_step_3_login(email_a, email_b)
+    run_step_4_patient_profiles(token_a)
+    run_step_5_retrofit_analysis_protection(token_a, user_b_id)
     print("\n[ALL 5 STEPS VERIFIED END-TO-END SUCCESSFULLY!]")
