@@ -15,8 +15,6 @@ class TriggerCard extends StatelessWidget {
         return '🌱';
       case 'humidity':
         return '💧';
-      case 'eye_rubbing':
-        return '👁️';
       default:
         return '⚠️';
     }

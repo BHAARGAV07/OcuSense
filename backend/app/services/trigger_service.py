@@ -26,7 +26,7 @@ class TriggerService:
                 "dust_level": "HIGH" if is_high_dust else "LOW",
                 "pollen_level": "HIGH" if i % 2 == 0 else "MODERATE",
                 "humidity": 78.0 if i % 3 == 0 else 60.0,
-                "habits": ["eye_rubbing"] if i % 2 == 1 else []
+                "habits": []
             })
         return snapshots
 
@@ -73,8 +73,7 @@ class TriggerService:
         factors_to_check = [
             ("dust", lambda s: str(s.get("dust_level")).upper() == "HIGH"),
             ("pollen", lambda s: str(s.get("pollen_level")).upper() == "HIGH"),
-            ("humidity", lambda s: float(s.get("humidity") or 0) >= settings.RISK_HUMIDITY_THRESHOLD),
-            ("eye_rubbing", lambda s: "eye_rubbing" in [h.lower() for h in (s.get("habits") or [])])
+            ("humidity", lambda s: float(s.get("humidity") or 0) >= settings.RISK_HUMIDITY_THRESHOLD)
         ]
 
         triggers_output = []

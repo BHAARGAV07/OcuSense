@@ -28,6 +28,10 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>OcuSense uses your current location to fetch local pollen and air-quality forecasts for flare-risk estimates.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>OcuSense uses your camera to capture a photo of your eyes for analysis.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>OcuSense lets you choose an eye photo from your photo library for analysis.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

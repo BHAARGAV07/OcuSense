@@ -52,7 +52,6 @@ class SymptomFeatures(BaseModel):
     redness: int = Field(0, ge=0, le=3, description="0=No, 1=Mild, 2=Moderate, 3=Severe")
     irritation: int = Field(0, ge=0, le=3, description="0=No, 1=Mild, 2=Moderate, 3=Severe")
     severity: int = Field(0, ge=0, le=10, description="Overall subjective severity 0-10")
-    eye_rubbing: int = Field(0, ge=0, le=3, description="0=No, 1=Mild, 2=Moderate, 3=Severe")
     medication_used_today: bool = Field(False, description="Whether rescue/regular drops were taken")
     symptoms_duration: str = Field("<1 day", description="<1 day, 1-3 days, >3 days")
 
@@ -87,7 +86,6 @@ class PersonalizationFeatures(BaseModel):
     pollen_sensitivity: bool = Field(True, description="Self-reported pollen sensitivity")
     pet_exposure: bool = Field(False, description="Exposure to pets")
     smoke_exposure: bool = Field(False, description="Exposure to smoke or traffic exhaust")
-    eye_rubbing_tendency: bool = Field(True, description="Habitual eye rubbing tendency")
     contact_lens_use: bool = Field(False, description="Wears contact lenses")
 
 

@@ -16,7 +16,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
   final List<Map<String, String>> _habitOptions = const [
     {'id': 'outdoor_activity', 'label': 'Outdoor Exposure', 'emoji': '🏞️', 'desc': 'Park, garden, or dusty streets'},
-    {'id': 'eye_rubbing', 'label': 'Frequent Eye Rubbing', 'emoji': '👁️', 'desc': 'Mechanical friction factor'},
     {'id': 'pet_contact', 'label': 'Pet Dander Exposure', 'emoji': '🐕', 'desc': 'Dogs, cats, or animals'},
     {'id': 'food_histamine', 'label': 'High Histamine Foods', 'emoji': '🧀', 'desc': 'Aged cheese, fermented food, seafood'},
     {'id': 'late_sleep', 'label': 'Sleep Deprivation', 'emoji': '🌙', 'desc': 'Under 6 hours of rest'},

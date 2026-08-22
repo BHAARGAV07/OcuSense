@@ -222,7 +222,7 @@ class RiskCard extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: onCheckEyes,
-                    icon: const Icon(Icons.videocam_rounded, size: 18),
+                    icon: const Icon(Icons.photo_camera_rounded, size: 18),
                     label: const Text('Check Eyes Now', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,

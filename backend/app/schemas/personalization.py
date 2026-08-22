@@ -23,7 +23,6 @@ class PersonalizationProfileUpdate(BaseModel):
     pet_exposure: Optional[bool] = None
     smoke_exposure: Optional[bool] = None
     outdoor_activity_hours: Optional[float] = Field(None, ge=0.0, le=24.0)
-    eye_rubbing_tendency: Optional[bool] = None
     contact_lens_use: Optional[bool] = None
     current_medication: Optional[str] = None
     is_onboarded: Optional[bool] = None
@@ -48,7 +47,6 @@ class PersonalizationProfileOut(BaseModel):
     pet_exposure: bool = False
     smoke_exposure: bool = False
     outdoor_activity_hours: float = 2.0
-    eye_rubbing_tendency: bool = False
     contact_lens_use: bool = False
     current_medication: Optional[str] = None
     is_onboarded: bool = False

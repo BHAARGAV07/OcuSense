@@ -17,7 +17,6 @@ class PersonalizationProfile {
   final bool petExposure;
   final bool smokeExposure;
   final double outdoorActivityHours;
-  final bool eyeRubbingTendency;
   final bool contactLensUse;
   final String? currentMedication;
   final bool isOnboarded;
@@ -40,7 +39,6 @@ class PersonalizationProfile {
     this.petExposure = false,
     this.smokeExposure = false,
     this.outdoorActivityHours = 2.0,
-    this.eyeRubbingTendency = false,
     this.contactLensUse = false,
     this.currentMedication,
     this.isOnboarded = false,
@@ -65,7 +63,6 @@ class PersonalizationProfile {
       petExposure: json['pet_exposure'] ?? false,
       smokeExposure: json['smoke_exposure'] ?? false,
       outdoorActivityHours: (json['outdoor_activity_hours'] as num?)?.toDouble() ?? 2.0,
-      eyeRubbingTendency: json['eye_rubbing_tendency'] ?? false,
       contactLensUse: json['contact_lens_use'] ?? false,
       currentMedication: json['current_medication'],
       isOnboarded: json['is_onboarded'] ?? false,
@@ -89,7 +86,6 @@ class PersonalizationProfile {
       'pet_exposure': petExposure,
       'smoke_exposure': smokeExposure,
       'outdoor_activity_hours': outdoorActivityHours,
-      'eye_rubbing_tendency': eyeRubbingTendency,
       'contact_lens_use': contactLensUse,
       'current_medication': currentMedication,
       'is_onboarded': isOnboarded,

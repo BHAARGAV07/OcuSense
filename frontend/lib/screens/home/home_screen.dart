@@ -5,9 +5,7 @@ import '../../providers/analysis_provider.dart';
 import '../../providers/patient_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/risk_card.dart';
-import '../track/symptoms_screen.dart';
 import '../track/habits_screen.dart';
-import '../track/eye_rubbing_screen.dart';
 import '../insights/triggers_screen.dart';
 import '../check_eyes/eye_check_flow_screen.dart';
 
@@ -152,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Colors.white.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.videocam_rounded, color: Colors.white, size: 28),
+                          child: const Icon(Icons.photo_camera_rounded, color: Colors.white, size: 28),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -169,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                '10–20s video capture • Objective CV redness • Flare probability',
+                                'Eye photo analysis • Objective redness • Flare probability',
                                 style: TextStyle(color: Colors.white70, fontSize: 12),
                               ),
                             ],
@@ -197,18 +195,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child: _buildActionTile(
                         context,
-                        icon: Icons.sick_outlined,
-                        title: 'Log Symptoms',
-                        color: AppColors.primary,
-                        onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const SymptomsScreen()));
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildActionTile(
-                        context,
                         icon: Icons.restaurant_outlined,
                         title: 'Log Habits',
                         color: AppColors.accent,
@@ -219,8 +205,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                _buildEyeRubbingQuickTile(context),
 
                 const SizedBox(height: 28),
 
@@ -345,61 +329,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: AppColors.textPrimary,
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEyeRubbingQuickTile(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const EyeRubbingScreen()));
-      },
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.riskModerate.withValues(alpha: 0.15), Colors.white],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.riskModerate.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.riskModerate.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Text('👁️', style: TextStyle(fontSize: 22)),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'Eye Rubbing Tracker',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Single-tap log to track mechanical friction events',
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.add_circle_outline_rounded, color: AppColors.riskModerate, size: 28),
           ],
         ),
       ),

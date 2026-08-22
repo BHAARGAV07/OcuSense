@@ -41,7 +41,6 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
 
   // Behavioural Information
   double _outdoorHours = 2.5;
-  bool _eyeRubbingTendency = false;
   bool _contactLensUse = false;
 
   // Medication
@@ -83,7 +82,6 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
           _petExposure = profile.petExposure;
           _smokeExposure = profile.smokeExposure;
           _outdoorHours = profile.outdoorActivityHours;
-          _eyeRubbingTendency = profile.eyeRubbingTendency;
           _contactLensUse = profile.contactLensUse;
           _medicationController.text = profile.currentMedication ?? '';
           _isFetching = false;
@@ -120,7 +118,6 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
         petExposure: _petExposure,
         smokeExposure: _smokeExposure,
         outdoorActivityHours: _outdoorHours,
-        eyeRubbingTendency: _eyeRubbingTendency,
         contactLensUse: _contactLensUse,
         currentMedication: _medicationController.text.trim().isNotEmpty
             ? _medicationController.text.trim()
@@ -496,28 +493,6 @@ class _PersonalizationScreenState extends State<PersonalizationScreen> {
                         divisions: 24,
                         activeColor: AppColors.primary,
                         onChanged: (val) => setState(() => _outdoorHours = val),
-                      ),
-                      const Divider(height: 16),
-                      Material(
-                        color: Colors.transparent,
-                        child: SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text(
-                          'Habitual Eye Rubbing Tendency',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                        subtitle: const Text(
-                          'Do you frequently rub or touch your eyes when irritated?',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        value: _eyeRubbingTendency,
-                        activeThumbColor: AppColors.riskModerate,
-                          onChanged: (val) =>
-                              setState(() => _eyeRubbingTendency = val),
-                        ),
                       ),
                       const Divider(height: 12),
                       Material(

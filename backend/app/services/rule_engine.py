@@ -12,7 +12,6 @@ from app.config import settings
 WEIGHT_DUST_POLLEN_SYMPTOM = 25
 WEIGHT_HUMIDITY_RISING_SYMPTOMS = 15
 WEIGHT_HIGH_AQI = 15
-WEIGHT_EYE_RUBBING_HABIT = 20
 
 DUST_HIGH_THRESHOLD = 300  # Numeric dust threshold or string "high"
 
@@ -35,7 +34,6 @@ class RuleEngine:
         pollen_level = str(env_api.get("pollen", "")).lower()
         symptom_severity = str(patient.get("symptom_severity", "")).upper()
         recent_symptoms_increased = bool(patient.get("recent_symptoms_increased", False))
-        habits = [h.lower() for h in patient.get("habits", [])]
 
         contributing_factors = []
         raw_score = 0
@@ -65,18 +63,7 @@ class RuleEngine:
                 "confidence": "insufficient data" if insufficient_data else "moderate"
             })
 
-        # Rule 3: Eye Rubbing Habit logged
-        if "eye_rubbing" in habits or "eye rubbing" in habits:
-            impact = WEIGHT_EYE_RUBBING_HABIT
-            raw_score += impact
-            contributing_factors.append({
-                "factor": "eye_rubbing",
-                "impact": impact,
-                "reason": "Frequent eye rubbing detected, risking mechanical corneal trauma",
-                "confidence": "insufficient data" if insufficient_data else "strong"
-            })
-
-        # Rule 4: High AQI
+        # Rule 3: High AQI
         aqi_level = str(env_api.get("aqi", "")).lower()
         if aqi_level == "high" or aqi_level == "very high":
             impact = WEIGHT_HIGH_AQI

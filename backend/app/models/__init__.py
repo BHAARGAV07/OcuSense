@@ -42,7 +42,6 @@ class PatientProfile(Base):
     pet_exposure = Column(Boolean, default=False)
     smoke_exposure = Column(Boolean, default=False)
     outdoor_activity_hours = Column(Float, default=2.0)
-    eye_rubbing_tendency = Column(Boolean, default=False)
     contact_lens_use = Column(Boolean, default=False)
     current_medication = Column(String, nullable=True)
     is_onboarded = Column(Boolean, default=False)
@@ -150,7 +149,7 @@ class HabitLog(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     patient_id = Column(String, ForeignKey("patients.id"), index=True)
-    habits = Column(JSON)  # e.g., ["eye_rubbing", "outdoor_activity"]
+    habits = Column(JSON)  # e.g., ["outdoor_activity"]
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
     patient = relationship("Patient", back_populates="habits")
@@ -171,7 +170,7 @@ class DailyTriggerSnapshot(Base):
     humidity = Column(Float)  # e.g. 76.0
     aqi = Column(String)  # "HIGH", "MODERATE", "LOW"
     weather = Column(String)
-    habits = Column(JSON)  # e.g. ["eye_rubbing"]
+    habits = Column(JSON)  # e.g. ["outdoor_activity"]
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     patient = relationship("Patient", back_populates="snapshots")

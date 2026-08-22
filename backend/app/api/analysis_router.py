@@ -69,7 +69,6 @@ async def get_risk_analysis(
     features.symptoms.watering = 2 if "watering" in symptoms else 0
     features.symptoms.irritation = 2 if "irritation" in symptoms else 0
     features.symptoms.severity = patient.get("symptom_severity_score", 0)
-    features.symptoms.eye_rubbing = 2 if "eye_rubbing" in patient.get("habits", []) else 0
 
     if profile:
         features.personalization = features.personalization.model_copy(update={
@@ -77,7 +76,7 @@ async def get_risk_analysis(
             for field in (
                 "age", "previous_allergy_history", "typical_flare_frequency",
                 "typical_seasonal_pattern", "dust_sensitivity", "pollen_sensitivity",
-                "pet_exposure", "smoke_exposure", "eye_rubbing_tendency", "contact_lens_use"
+                "pet_exposure", "smoke_exposure", "contact_lens_use"
             )
             if getattr(profile, field) is not None
         })

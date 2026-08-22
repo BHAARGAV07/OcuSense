@@ -164,8 +164,6 @@ class MLPredictionEngine(PredictionEngine):
                 "Consider wearing wrap-around sunglasses outdoors to minimize particulate contact.",
                 "Check daily environmental AQI and pollen forecasts."
             ]
-            if features.symptoms.eye_rubbing > 0 or features.personalization.eye_rubbing_tendency:
-                items.append("Avoid rubbing eyes; apply a cold compress if irritation occurs.")
             return items
         else:  # HIGH
             return [
@@ -216,18 +214,7 @@ class RuleBasedPredictionEngine(PredictionEngine):
                 "reason": "High ambient humidity above 75% threshold."
             })
 
-        # Rule 3: Eye Rubbing
-        if symptoms.eye_rubbing > 0 or features.personalization.eye_rubbing_tendency:
-            impact = 20
-            raw_score += impact
-            contributing_factors.append({
-                "factor_key": "eye_rubbing",
-                "display_name": "Eye Rubbing Habit",
-                "impact": impact,
-                "reason": "Mechanical friction increases ocular surface irritation."
-            })
-
-        # Rule 4: High AQI
+        # Rule 3: High AQI
         if env.aqi is not None and env.aqi > 100:
             impact = 15
             raw_score += impact

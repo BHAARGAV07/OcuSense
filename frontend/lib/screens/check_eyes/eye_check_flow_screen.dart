@@ -1,11 +1,14 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/analysis_provider.dart';
 import '../../models/ocular_analysis.dart';
 import '../prediction/prediction_result_screen.dart';
+import 'web_camera_capture.dart';
 
 class EyeCheckFlowScreen extends StatefulWidget {
   const EyeCheckFlowScreen({super.key});
@@ -26,64 +29,68 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
   int _itching = 1;      // 0: None, 1: Mild, 2: Mod, 3: Sev
   int _watering = 1;
   int _rednessNoticed = 1;
-  int _eyeRubbing = 0;
   bool _medicationUsedToday = false;
   String _symptomDuration = '<1 day';
 
-  // Synthetic or Mocked Capture Bytes for Demonstration/Web/Platform compatibility
-  Future<void> _simulateCapture({bool simulateHighQuality = true}) async {
+  final ImagePicker _imagePicker = ImagePicker();
+
+  Future<void> _takeEyePhoto() async {
+    if (kIsWeb) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => WebCameraCaptureScreen(
+            onCaptured: (bytes) {
+              Navigator.of(context).pop();
+              _analyzeImage(bytes, 'eye_photo.jpg');
+            },
+          ),
+        ),
+      );
+      return;
+    }
+
+    await _pickAndAnalyzeImage(ImageSource.camera);
+  }
+
+  Future<void> _pickAndAnalyzeImage(ImageSource source) async {
+    final image = await _imagePicker.pickImage(source: source, imageQuality: 90);
+    if (image == null || !mounted) return;
+
+    await _analyzeImage(await image.readAsBytes(), image.name);
+  }
+
+  Future<void> _analyzeImage(List<int> bytes, String filename) async {
     setState(() {
       _isProcessing = true;
       _errorMessage = null;
     });
 
     final analysisProvider = Provider.of<AnalysisProvider>(context, listen: false);
-
-    // Generate a structured byte payload for analysis
-    final dummyBytes = List<int>.generate(1024, (i) => (i % 256));
-    final filename = simulateHighQuality ? 'eye_capture_valid.jpg' : 'eye_capture_blurry.jpg';
-
-    // Call Ocular Analysis Service via Provider (or direct robust demo fallback)
     try {
       final res = await analysisProvider.analyzeOcularCapture(
-        bytes: dummyBytes,
+        bytes: bytes,
         filename: filename,
         isVideo: false,
       );
 
       if (mounted) {
         setState(() {
-          _analysisResult = res ?? OcularAnalysisResult(
-            success: true,
-            isAcceptable: true,
-            imageQuality: 0.92,
-            rednessScore: 0.58,
-            inflammationScore: 0.62,
-            confidence: 0.88,
-            feedback: 'Good lighting and sharpness detected.',
-          );
           _isProcessing = false;
-          if (_analysisResult!.isAcceptable) {
-            _currentStep = 1; // Move to review objective features
+          _analysisResult = res;
+          if (res?.isAcceptable == true) {
+            _currentStep = 1;
           } else {
-            _errorMessage = _analysisResult?.feedback ?? 'Image quality insufficient for reliable analysis.';
+            _errorMessage = res?.feedback ?? analysisProvider.ocularErrorMessage ??
+                'We could not analyze this image. Please try another clear eye photo.';
           }
         });
       }
     } catch (_) {
       if (mounted) {
         setState(() {
-          _analysisResult = OcularAnalysisResult(
-            success: true,
-            isAcceptable: true,
-            imageQuality: 0.94,
-            rednessScore: 0.64,
-            inflammationScore: 0.70,
-            confidence: 0.86,
-            feedback: 'Image quality is acceptable for objective feature extraction.',
-          );
           _isProcessing = false;
-          _currentStep = 1;
+          _errorMessage = 'Unable to use this image. Please try again.';
         });
       }
     }
@@ -133,7 +140,6 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
         'redness': _rednessNoticed,
         'irritation': max(_itching, _watering),
         'severity': (_itching + _watering + _rednessNoticed + 1),
-        'eye_rubbing': _eyeRubbing,
         'medication_used_today': _medicationUsedToday,
         'symptoms_duration': _symptomDuration,
       },
@@ -165,7 +171,6 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
         'typical_flare_frequency': 'Monthly',
         'dust_sensitivity': true,
         'pollen_sensitivity': true,
-        'eye_rubbing_tendency': _eyeRubbing > 0,
       },
       'history': {
         'previous_flares_count': 2,
@@ -257,7 +262,7 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
     }
   }
 
-  // --- STEP 0: VIDEO / PHOTO CAPTURE & INSTRUCTIONS ---
+  // --- STEP 0: IMAGE CAPTURE & UPLOAD ---
   Widget _buildStep0CaptureView() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
@@ -270,12 +275,12 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Record or upload a 10–20 second eye video for computer vision assessment before answering symptoms.',
+            'Take or upload a clear photo of your eyes for computer vision assessment before answering symptoms.',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
           ),
           const SizedBox(height: 24),
 
-          // Camera Viewfinder Mock / Capture Box
+          // Image capture preview
           Container(
             height: 240,
             width: double.infinity,
@@ -296,7 +301,7 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
                         color: AppColors.primary.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.videocam_rounded, color: AppColors.primary, size: 44),
+                      child: const Icon(Icons.photo_camera_rounded, color: AppColors.primary, size: 44),
                     ),
                     const SizedBox(height: 12),
                     const Text(
@@ -305,7 +310,7 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
                     ),
                     const SizedBox(height: 4),
                     const Text(
-                      'Neutral background • Hold camera steady',
+                      'Use a clear photo • Avoid flash glare',
                       style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
@@ -346,8 +351,8 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
                 Text('Capture Guidelines for Quality Validation:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 SizedBox(height: 8),
                 Text('• Face toward a natural light source (window or well-lit room).', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                Text('• Avoid shadows, glare, or rapid head movement.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                Text('• Blurry or poorly lit videos will be flagged for re-capture.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text('• Avoid shadows, glare, and closed eyes.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text('• Blurry or poorly lit images will be flagged for another photo.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
               ],
             ),
           ),
@@ -377,11 +382,11 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
             ),
           ],
 
-          // Record / Upload Button
+          // Capture / Upload image buttons
           ElevatedButton.icon(
-            onPressed: _isProcessing ? null : () => _simulateCapture(simulateHighQuality: true),
+            onPressed: _isProcessing ? null : _takeEyePhoto,
             icon: const Icon(Icons.camera_alt_rounded),
-            label: const Text('Capture & Check Quality'),
+            label: const Text('Take Eye Photo'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               minimumSize: const Size(double.infinity, 56),
@@ -390,9 +395,9 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed: _isProcessing ? null : () => _simulateCapture(simulateHighQuality: true),
+            onPressed: _isProcessing ? null : () => _pickAndAnalyzeImage(ImageSource.gallery),
             icon: const Icon(Icons.file_upload_outlined),
-            label: const Text('Upload 10-20s Video File'),
+            label: const Text('Upload Eye Photo'),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -511,9 +516,6 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
           const SizedBox(height: 14),
           _buildQuestionCard('3. Redness Noticed?', _rednessNoticed, (val) => setState(() => _rednessNoticed = val)),
           const SizedBox(height: 14),
-          _buildQuestionCard('4. Eye Rubbing Today?', _eyeRubbing, (val) => setState(() => _eyeRubbing = val)),
-          const SizedBox(height: 14),
-
           // Medication used today
           Container(
             padding: const EdgeInsets.all(16),
@@ -524,7 +526,7 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
             ),
             child: SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('5. Allergy eye drops used today?', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              title: const Text('4. Allergy eye drops used today?', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               value: _medicationUsedToday,
               activeThumbColor: AppColors.primary,
               onChanged: (val) => setState(() => _medicationUsedToday = val),
@@ -543,7 +545,7 @@ class _EyeCheckFlowScreenState extends State<EyeCheckFlowScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('6. Symptoms duration?', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                const Text('5. Symptoms duration?', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 10,

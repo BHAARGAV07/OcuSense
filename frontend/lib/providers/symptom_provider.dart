@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/symptom.dart';
 import '../models/habit.dart';
-import '../models/eye_rubbing.dart';
 import '../services/symptom_service.dart';
 import '../services/habit_service.dart';
 import '../services/api_client.dart';
@@ -12,7 +11,6 @@ class SymptomProvider extends ChangeNotifier {
 
   List<SymptomLog> _symptomLogs = [];
   List<HabitLog> _habitLogs = [];
-  EyeRubbingSummary? _eyeRubbingSummary;
 
   bool _isLoading = false;
   bool _isSubmitting = false;
@@ -22,7 +20,6 @@ class SymptomProvider extends ChangeNotifier {
 
   List<SymptomLog> get symptomLogs => _symptomLogs;
   List<HabitLog> get habitLogs => _habitLogs;
-  EyeRubbingSummary? get eyeRubbingSummary => _eyeRubbingSummary;
   bool get isLoading => _isLoading;
   bool get isSubmitting => _isSubmitting;
   String? get errorMessage => _errorMessage;
@@ -34,7 +31,6 @@ class SymptomProvider extends ChangeNotifier {
     try {
       _symptomLogs = await _symptomService.getSymptomLogs();
       _habitLogs = await _habitService.getHabitLogs();
-      _eyeRubbingSummary = await _habitService.getEyeRubbingSummary();
     } catch (_) {} finally {
       _isLoading = false;
       notifyListeners();
@@ -101,26 +97,4 @@ class SymptomProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> logEyeRubbingEvent() async {
-    _isSubmitting = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      _eyeRubbingSummary = await _habitService.logEyeRubbingEvent();
-      _isSubmitting = false;
-      notifyListeners();
-      return true;
-    } on ApiException catch (e) {
-      _errorMessage = e.message;
-      _isSubmitting = false;
-      notifyListeners();
-      return false;
-    } catch (e) {
-      _errorMessage = 'Failed to log eye rubbing event.';
-      _isSubmitting = false;
-      notifyListeners();
-      return false;
-    }
-  }
 }

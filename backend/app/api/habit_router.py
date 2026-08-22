@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/habits", tags=["Habits"])
 
 
 class HabitLogCreate(BaseModel):
-    habits: List[str] = Field(default_factory=list, description="List of habits e.g. outdoor_activity, eye_rubbing, food")
+    habits: List[str] = Field(default_factory=list, description="List of habits e.g. outdoor_activity, food")
     notes: Optional[str] = None
 
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import 'symptoms_screen.dart';
 import 'habits_screen.dart';
-import 'eye_rubbing_screen.dart';
 
 class TrackScreen extends StatelessWidget {
   const TrackScreen({super.key});
@@ -30,7 +29,7 @@ class TrackScreen extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Select a category to record daily symptoms, lifestyle habits, or mechanical eye-rubbing friction.',
+                'Select a category to record daily symptoms and lifestyle habits.',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 24),
@@ -57,19 +56,6 @@ class TrackScreen extends StatelessWidget {
                 badgeColor: AppColors.accent,
                 onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const HabitsScreen()));
-                },
-              ),
-              const SizedBox(height: 16),
-
-              _buildTrackCard(
-                context,
-                title: 'Eye Rubbing Quick Log',
-                subtitle: 'Single-tap friction counter to calculate corneal trauma risk',
-                icon: Icons.remove_red_eye_outlined,
-                badge: 'High Risk Mechanical Factor',
-                badgeColor: AppColors.riskModerate,
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const EyeRubbingScreen()));
                 },
               ),
             ],
